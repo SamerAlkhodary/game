@@ -1,0 +1,24 @@
+.list{
+    display: flex;
+    flex-direction: row;
+    background-color: 'red';
+    width: '100%';
+  }
+  .menuItem{
+    margin:2rem;
+    width: 10rem;
+    height: 15rem;
+
+  }
+  .arrowButton{
+    margin-top: 2vw;
+    background-color:white;
+    border: none;
+    width: 15vw;
+    height: 3vw;
+    font-size: 1.5vw;
+    color: black;
+    border-radius: 0.5vw;
+    font-weight: bold;
+    cursor: pointer;
+  }
