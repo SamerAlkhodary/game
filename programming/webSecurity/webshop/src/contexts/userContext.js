@@ -1,4 +1,4 @@
-import React,{createContext,useCallback, useReducer} from 'react';
+import React, { createContext, useCallback, useReducer } from 'react';
 import source from '../dataSources';
 const initialState = {
     user: null,
@@ -7,40 +7,60 @@ const initialState = {
 const actions = {
     Login: 'Login',
     Logout: 'Logout',
-    Signup: 'Signup'
+    Signup: 'Signup',
+    Load: 'Load'
 }
-const reducer = (state, action)=>{
-    switch (action.type){
-        case actions.Login:{
-            return {...state,user: action.user, token: action.token}
+const reducer = (state, action) => {
+    // eslint-disable-next-line default-case
+    switch (action.type) {
+        case actions.Login: {
+            return { ...state, user: action.user, token: action.token }
         }
-        case actions.Signup:{
-            return {...state,user: action.user, token: action.token}
+        case actions.Signup: {
+            return { ...state, user: action.user, token: action.token }
         }
-        case actions.Logout:{
-            return {}
+        case actions.Logout: {
+            return initialState
+        }
+        case actions.Load: {
+            return { ...state, user: action.user, token: action.token }
         }
     }
     return state;
 }
 const UserContext = createContext(initialState);
-export const UserContextProvider = ({children}) =>{
+export const UserContextProvider = ({ children }) => {
     const [userState, userDispatch] = useReducer(reducer, initialState);
-    
-    const signup= useCallback(
-        async(user)=>{
-            try{
+    const load = useCallback(
+        () => {
+            const user = localStorage.getItem('user');
+            const token = localStorage.getItem('token');
+
+            if (user && token) {
+                userDispatch({
+                    type: actions.Load,
+                    user,
+                    token
+                });
+            }
+        }, [userDispatch]
+    );
+    const signup = useCallback(
+        async (user) => {
+            try {
                 const result = await source.signup(user);
-                if(result){
+                if (result) {
                     userDispatch({
                         type: actions.Signup,
                         user: result.user,
                         token: result.token,
                     });
-    
+                    localStorage.setItem("user", String(result.user));
+                    localStorage.setItem("token", String(result.token));
+
                 }
-            }catch(err){
-                console.warn("Signup faild",err);
+            } catch (err) {
+                console.warn("Signup faild", err);
                 userDispatch({
                     type: actions.Signup,
                     user: {},
@@ -50,23 +70,38 @@ export const UserContextProvider = ({children}) =>{
 
             }
 
-        }
+        }, [userDispatch]
+    );
+    const logout = useCallback(
+        () => {
+      
+            localStorage.removeItem("user" );
+            localStorage.removeItem("token");
+            userDispatch({
+                type: actions.Logout,
+            });
+
+
+
+        }, [userDispatch]
     );
 
     const login = useCallback(
         async (username, password) => {
-            try{
+            try {
                 const result = await source.login(username, password);
-                if(result){
+                if (result) {
                     userDispatch({
                         type: actions.Login,
                         user: result.user,
                         token: result.token,
                     });
-    
+                    localStorage.setItem("user", String(result.user));
+                    localStorage.setItem("token", String(result.token));
+
                 }
-            }catch(err){
-                console.warn("Login faild",err);
+            } catch (err) {
+                console.warn("Login faild", err);
                 userDispatch({
                     type: actions.Login,
                     user: {},
@@ -75,14 +110,16 @@ export const UserContextProvider = ({children}) =>{
                 });
 
             }
-           
-        },[userDispatch,source.login]
+
+        }, [userDispatch]
     );
     return (
-        <UserContext.Provider value ={{
+        <UserContext.Provider value={{
             userState,
             login,
-            signup
+            signup,
+            load,
+            logout
         }}
         >
             {children}

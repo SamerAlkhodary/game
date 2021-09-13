@@ -2,11 +2,12 @@ import React,{useContext, useEffect, useState} from 'react';
 import UserContext from '../../contexts/userContext';
 import {Form, Button, Card} from 'react-bootstrap'
 import { Link } from 'react-router-dom';
-import ParticlesBg from 'particles-bg'
+import ParticlesBg from 'particles-bg';
+import { useHistory } from 'react-router-dom';
 const LoginPage =() =>{
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
-    
+    const history = useHistory();
     const {login,userState}  = useContext(UserContext);
 
     const submit = (event)=>{
@@ -14,16 +15,19 @@ const LoginPage =() =>{
         login(username,password);       
     
     }
-    useEffect(()=>{
-        console.log(userState);
-    },[userState]);
-   
+
    const userNamechanged=(change)=>{
       setUsername(change.target.value);
    }
    const passwordChanged = (change)=>{
     setPassword(change.target.value)
    }
+
+   useEffect(()=>{
+       if(userState.token){
+           history.push('/');
+       }
+   },[history,userState])
 
 
     return (

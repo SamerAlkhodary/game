@@ -4,18 +4,22 @@ import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
 import { UserContextProvider } from './contexts/userContext';
 import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
 import SignupPage from './pages/signup';
-import shopPage from './pages/shop';
+import ShopPage from './pages/shop';
+import { CartContextProvider } from './contexts/cartContext';
+import CartPage from './pages/cartPage';
 function App() {
   return (
     <Router>
       <UserContextProvider>
+        <CartContextProvider>
        <Switch>
-         <Route path= "/" exact component= {LoginPage}/>
+         <Route path= "/" exact component= {ShopPage}/>
          <Route path= "/signup" component= {SignupPage}/>
-         <Route path= "/shop" component= {shopPage}/>
+         <Route path= "/login" component= {LoginPage}/>
+         <Route path= "/cart" component= {CartPage}/>
      
        </Switch>
-
+       </CartContextProvider>
     </UserContextProvider>
 
     </Router>
