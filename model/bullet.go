@@ -4,6 +4,7 @@ import(
 	"github.com/veandco/go-sdl2/sdl"
 	"math"
 	"fmt"
+	"log"
 )
 
 type Bullet struct{
@@ -20,6 +21,8 @@ type Bullet struct{
 	rotationAngle float64
 	xSpeed float64
 	ySpeed float64
+	isRigid bool
+	collisionRect *sdl.Rect
 }
 func MakeBullet(name string,rect *sdl.Rect,renderer *sdl.Renderer,blockSize int32,damage int32, speed float64,effectRadius int32,bulletRange int32,rotationAngle float64)*Bullet{
 	bulletPath := "images/bullets/"
@@ -43,11 +46,16 @@ func MakeBullet(name string,rect *sdl.Rect,renderer *sdl.Renderer,blockSize int3
 		bulletRange : bulletRange,
 		rotationAngle : rotationAngle,
 		initialRect: &sdl.Rect{X: rect.X, Y: rect.Y, W:rect.W,H:rect.H},
+		collisionRect: &sdl.Rect{X:rect.X+10*100/blockSize,Y:rect.Y+10*100/blockSize,W:rect.W-20*100/blockSize,H:rect.H-20*100/blockSize},
+		isRigid: true,
 	}
 
 }
 func (bullet *Bullet)Render(renderer *sdl.Renderer,camera *sdl.Rect){
 	renderer.CopyEx(bullet.texture, &sdl.Rect{X:0,Y:0,W:50,H:50}, bullet.rect, bullet.rotationAngle , nil,sdl.FLIP_NONE);
+	renderer.SetDrawColor(0,0, 0, 255)
+	renderer.DrawRect(bullet.collisionRect)
+	renderer.SetDrawColor(193, 154, 107, 255)
 
 }
 func outOfRange(initialRect, currentRect *sdl.Rect, bulletRange int32) bool{
@@ -59,6 +67,8 @@ func (bullet *Bullet)Tick(eventType,key int){
 	bullet.xSpeed,bullet.ySpeed =calculateSpeed(bullet.speed,bullet.rotationAngle)
 	bullet.rect.X += int32(bullet.xSpeed)
 	bullet.rect.Y += int32(bullet.ySpeed)
+	bullet.collisionRect.X += int32(bullet.xSpeed)
+	bullet.collisionRect.Y += int32(bullet.ySpeed)
 	bullet.isAlive = !outOfRange(bullet.initialRect,bullet.rect,bullet.bulletRange)
 	
 }
@@ -80,4 +90,22 @@ func calculateCoords(length float64 ,rotationAngle float64,x1,y1 float64)(int32,
 
 func (bullet *Bullet)Free(){
 	bullet.texture.Destroy()
+}
+func (bullet *Bullet)HandleCollision(other Entity){
+	
+	if other.IsRigid(){
+		tile,done := other.(*Tile)
+	if done{
+		collision:=tile.collisionRect.HasIntersection(bullet.collisionRect)
+		if collision{
+			log.Println("coll")
+			bullet.isAlive = false
+		}
+	}
+		
+	}
+
+}
+func(bullet *Bullet)IsRigid()bool{
+	return bullet.isRigid
 }

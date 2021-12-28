@@ -8,8 +8,10 @@ import(
 type Tile struct{
 	texture *sdl.Texture
 	rect *sdl.Rect
+	collisionRect *sdl.Rect
 	from *sdl.Rect
 	isAlive bool
+	isRigid bool
 
 }
 func MakeTile(i,j int32, tileType int32, renderer *sdl.Renderer,blockSize int32) *Tile{
@@ -18,6 +20,7 @@ func MakeTile(i,j int32, tileType int32, renderer *sdl.Renderer,blockSize int32)
 	var texture *sdl.Texture
 	from := &sdl.Rect{X:0,Y:0,W:100,H:100}
 	var err error
+	isRigid:=false
 	switch tileType{
 	case 0:
 		return nil
@@ -26,11 +29,8 @@ func MakeTile(i,j int32, tileType int32, renderer *sdl.Renderer,blockSize int32)
 		filePath ="images/grass/1grass1.bmp"
 		
 	break
-	case 2:
-		filePath ="images/waterTiles/11water1.bmp"
 
 
-	break
 	case 3:
 		filePath ="images/earthTiles/31earth1.bmp"
 
@@ -38,12 +38,14 @@ func MakeTile(i,j int32, tileType int32, renderer *sdl.Renderer,blockSize int32)
 	break
 	case 4:
 		filePath ="images/items/tree2.bmp"
+		isRigid = true
 
 		
 
 	break
 	case 5:
 		filePath ="images/items/lake.bmp"
+		isRigid =true
 
 	
 	break
@@ -54,8 +56,6 @@ func MakeTile(i,j int32, tileType int32, renderer *sdl.Renderer,blockSize int32)
 	case 7:
 		filePath ="images/items/wall.bmp"
 		
-
-	
 
 	break
 	}
@@ -72,15 +72,19 @@ func MakeTile(i,j int32, tileType int32, renderer *sdl.Renderer,blockSize int32)
 	
 	return &Tile{
 		rect : &sdl.Rect{X:i*blockSize, Y:j*blockSize, W:blockSize, H:blockSize},
+		collisionRect : &sdl.Rect{X:i*blockSize+20*100/blockSize, Y:j*blockSize+20*100/blockSize, W:blockSize-40*100/blockSize, H:blockSize-40*100/blockSize},
 		texture: texture,
 		from:from,	
 		isAlive:true,
+		isRigid: isRigid,
 
 	}
 }
 func (tile *Tile) Render(renderer *sdl.Renderer,camera *sdl.Rect){
 	renderer.Copy(tile.texture,tile.from,tile.rect)
-
+	renderer.SetDrawColor(0,0, 0, 255)
+	renderer.DrawRect(tile.collisionRect)
+	renderer.SetDrawColor(193, 154, 107, 255)
 }
 func (tile *Tile) Tick(eventType,key int){
 	
@@ -110,4 +114,11 @@ func (tile *Tile)IsAlive()bool{
 func (tile *Tile)Free(){
 	tile.texture.Destroy()
 
+}
+func (tile *Tile)HandleCollision(other Entity){
+	
+
+}
+func(tile *Tile)IsRigid() bool{
+	return tile.isRigid
 }

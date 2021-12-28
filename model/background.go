@@ -55,3 +55,12 @@ func (bg *Background)Free(){
 	
 
 }
+func (bg *Background)HandleCollision(other Entity){
+	
+
+}
+
+func (bg *Background)IsRigid()bool{
+	return false
+
+}

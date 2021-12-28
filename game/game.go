@@ -6,6 +6,7 @@ import (
 	)
 type Game struct{
 	entities []model.Entity
+	bullets []model.Entity
 	window *sdl.Window
 	renderer *sdl.Renderer
 	camera *sdl.Rect
@@ -16,6 +17,7 @@ type Game struct{
 	frames uint32
 	mapTiles [][]int32
 	blockSize int32
+	player model.Entity
 }
 
 func Init(width,height int32,blockSize int32,tiles [][]int32) *Game{
@@ -36,6 +38,7 @@ func Init(width,height int32,blockSize int32,tiles [][]int32) *Game{
 
 	game:= &Game{
 		entities:make([]model.Entity, 0),
+		bullets: make([]model.Entity, 0),
 		window:window,
 		renderer:renderer,
 		camera : &sdl.Rect{X:0,Y:0,W:width,H:height},
@@ -56,7 +59,8 @@ func (game *Game)initEntities(){
 	background := model.MakeBackground("game.mapTiles",game.width,game.height,game.renderer)
 	player1Rect := &sdl.Rect{ X:1*blockSize,Y:2*blockSize,W:1*blockSize,H:1*blockSize}
 	player1KeyControl := model.MakeKeyController('w','e',32,'l')
-	player1 := model.MakePlayer("Samer",1,player1Rect,game.renderer,game.blockSize,player1KeyControl,game.AddEntity)
+	player1 := model.MakePlayer("Samer",1,player1Rect,game.renderer,game.blockSize,player1KeyControl,game.AddBullet)
+	game.player = player1
 	game.AddEntity(background)	
 	for i ,_:= range(game.mapTiles){
 		for j,_ := range(game.mapTiles[i]){
@@ -72,6 +76,13 @@ func (game *Game)makeTile(i, j int32){
 		game.AddEntity(tile)
 	}
 }
+
+func (game *Game)AddBullet(e model.Entity){
+
+	game.bullets = append(game.bullets, e)
+	
+}
+
 func (game *Game)AddEntity(e model.Entity){
 	game.entities = append(game.entities, e)
 	
@@ -83,12 +94,25 @@ func  (game *Game) render(){
 			entity.Render(game.renderer,game.camera)
 		
 	}
+	for _,bullet := range(game.bullets){
+		bullet.Render(game.renderer,game.camera)
+	
+	}
 }
 func  (game *Game) tick(eventType, key int){
 	for _,entity := range(game.entities){
 			entity.Tick(eventType,key)
+			game.player.HandleCollision(entity)
+	}
+	for _,bullet := range(game.bullets){
+		bullet.Tick(eventType,key)
+		for _,entity := range(game.entities){
+			bullet.HandleCollision(entity)
+
+		}
 	}
 	game.entities = filterAlive(game.entities)
+	game.bullets = filterAlive(game.bullets)
 
 
 }

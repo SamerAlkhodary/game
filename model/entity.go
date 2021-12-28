@@ -8,5 +8,7 @@ type Entity interface{
 	Tick(int,int)
 	IsAlive()bool
 	Free()
+	HandleCollision(other Entity)
+	IsRigid()bool
 
 }
