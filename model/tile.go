@@ -19,7 +19,7 @@ func MakeTile(i,j int32, tileType int32, renderer *sdl.Renderer,blockSize int32)
 	var surface *sdl.Surface
 	var texture *sdl.Texture
 	from := &sdl.Rect{X:0,Y:0,W:100,H:100}
-	collisionRect:= &sdl.Rect{X:i*blockSize+20*100/blockSize, Y:j*blockSize+20*100/blockSize, W:blockSize-40*100/blockSize, H:blockSize-40*100/blockSize}
+	collisionRect:= &sdl.Rect{X:int32(i*blockSize+blockSize*20/100), Y:j*blockSize+blockSize*20/100, W:blockSize-blockSize*40/100, H:blockSize-blockSize*40/100}
 	var err error
 	isRigid:=false
 	switch tileType{
@@ -85,6 +85,9 @@ func MakeTile(i,j int32, tileType int32, renderer *sdl.Renderer,blockSize int32)
 }
 func (tile *Tile) Render(renderer *sdl.Renderer,camera *sdl.Rect){
 	renderer.Copy(tile.texture,tile.from,tile.rect)
+	renderer.SetDrawColor(0, 255, 0, 255)
+	renderer.DrawRect(tile.collisionRect)
+	renderer.SetDrawColor(193, 154, 107, 255)
 	
 	
 	

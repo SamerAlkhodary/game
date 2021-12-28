@@ -46,7 +46,7 @@ func MakeBullet(name string,rect *sdl.Rect,renderer *sdl.Renderer,blockSize int3
 		bulletRange : bulletRange,
 		rotationAngle : rotationAngle,
 		initialRect: &sdl.Rect{X: rect.X, Y: rect.Y, W:rect.W,H:rect.H},
-		collisionRect: &sdl.Rect{X:rect.X+10*100/blockSize,Y:rect.Y+10*100/blockSize,W:rect.W-20*100/blockSize,H:rect.H-20*100/blockSize},
+		collisionRect: &sdl.Rect{X:rect.X+blockSize*10/100,Y:rect.Y+blockSize*10/100,W:rect.W-blockSize*20/100,H:rect.H-blockSize*20/100},
 		isRigid: true,
 	}
 

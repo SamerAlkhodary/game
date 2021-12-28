@@ -64,7 +64,8 @@ func (game *Game)initEntities(){
 	player1Rect := &sdl.Rect{ X:1*blockSize,Y:2*blockSize,W:1*blockSize,H:1*blockSize}
 	player1KeyControl := model.MakeKeyController('w','e',32,'l')
 	player1 := model.MakePlayer("Samer",1,player1Rect,game.renderer,game.blockSize,player1KeyControl,game.AddBullet)
-	game.player = player1
+
+
 	game.players = append(game.players,player1)
 	game.AddEntity(background)	
 	for i ,_:= range(game.mapTiles){

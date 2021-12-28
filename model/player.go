@@ -3,6 +3,7 @@ import (
 	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/mix"
+	"github.com/veandco/go-sdl2/ttf"
 	"math"
 	"log"
 )
@@ -11,10 +12,15 @@ import (
 	id int 
 	pos *Pos
 	rect *sdl.Rect
+	healthBarRect *sdl.Rect
+	healthBarBackgroundRect *sdl.Rect
 	blockSize int32
 	xSpeed float64
 	ySpeed float64
 	baseSpeed float64
+	nameTexture *sdl.Texture
+	nameRect *sdl.Rect
+	health int32
 	rotationSpeed int
 	rotation int
 	tankTexture *sdl.Texture
@@ -40,13 +46,16 @@ func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockS
 	tankPath := "images/tank/"
 	tankSurface := spriteLoader(tankPath+"tank.bmp")
 	tankTexture:= textureMaker(tankSurface,renderer)
+	ttf.Init()
+	sans,_ := ttf.OpenFont("fonts/SansBold.ttf", 28);
+	surface,_ := sans.RenderUTF8Solid(name,sdl.Color{R:0,G:0,B:0,A:255})
+	texture,_:=renderer.CreateTextureFromSurface( surface);
+	healthBarBackgroundRect:= &sdl.Rect{X: blockSize, Y:blockSize/4,W:5*blockSize,H:blockSize/2}
 	mix.Init(mix.INIT_FLAC)
 	mix.OpenAudio(mix.DEFAULT_FREQUENCY,mix.DEFAULT_FORMAT,mix.DEFAULT_CHANNELS,mix.DEFAULT_CHUNKSIZE)
 	chunk1,err:= mix.LoadWAV("audio/movingTank.wav")
 	chunk2,err:= mix.LoadWAV("audio/engine.wav")
 	chunk3,err:= mix.LoadWAV("audio/fire.wav")
-	
-	
 	
 	chunks:= make([]*mix.Chunk,0)
 	if err!=nil{
@@ -66,10 +75,13 @@ func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockS
 		rotation:0,
 		isAlive:true,
 		fire : false,
+		health: 100,
 		move:false,
 		keyController:keyController,
 		rect:rect,
-		collisionRect: &sdl.Rect{X:rect.X+10*100/blockSize,Y:rect.Y+10*100/blockSize,W:rect.W-20*100/blockSize,H:rect.H-20*100/blockSize},
+		collisionRect: &sdl.Rect{X:rect.X+blockSize*10/100,Y:rect.Y+blockSize*10/100,W:rect.W-blockSize*25/100,H:rect.H-blockSize*25/100},
+		healthBarRect: &sdl.Rect{X: blockSize, Y:blockSize/4,W:5*blockSize,H:blockSize/2},
+		healthBarBackgroundRect:healthBarBackgroundRect,
 		rotationSpeed:1,
 		xSpeed:1,
 		ySpeed:1,
@@ -83,10 +95,13 @@ func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockS
 		isRigid:true,
 		hasPlayedSounds: []bool{false,false,false},
 		chunks:chunks,
+		nameTexture:texture,
+		nameRect: &sdl.Rect{X:(healthBarBackgroundRect.X+healthBarBackgroundRect.W)/2,Y:(healthBarBackgroundRect.Y+healthBarBackgroundRect.H)/3,W:blockSize,H:blockSize/2},
 		
 	}
 
 }
+
 func (player *Player) String() string{
 	return fmt.Sprintf("{Name:%s, id: %d, pos: %s}",player.name,player.id,player.pos.String())
 }
@@ -94,9 +109,15 @@ func (player *Player) String() string{
 func (player *Player)Render(renderer *sdl.Renderer,camera *sdl.Rect){
 	renderer.CopyEx(player.tankTexture, &sdl.Rect{X:0,Y:0,W:200,H:200}, player.rect, player.tankRotationAngle , nil,sdl.FLIP_NONE);
 	renderer.CopyEx(player.torret.torretTexture, &sdl.Rect{X:0,Y:0,W:200,H:200}, player.torret.torretRect, player.torret.rotationAngle , nil,sdl.FLIP_NONE);
-	
-	
-	
+	renderer.SetDrawColor(255, 0, 0, 255)
+	renderer.FillRect(player.healthBarBackgroundRect)
+	renderer.SetDrawColor(0, 255, 0, 255)
+	renderer.FillRect(player.healthBarRect)
+	renderer.SetDrawColor(193, 154, 107, 255)
+	renderer.SetDrawColor(0, 255, 0, 255)
+	renderer.DrawRect(player.collisionRect)
+	renderer.SetDrawColor(193, 154, 107, 255)
+	renderer.Copy(player.nameTexture,nil,player.nameRect)
 
 }
 func (player *Player)handleEvents(eventType,key int){
@@ -179,7 +200,7 @@ func (player *Player) Fire(){
 			player.torret.torretXOffset = int32(xOffSet)
 			player.torret.torretYOffset = int32(yOffSet)
 			player.alreadyFired =  true
-			player.addBullet(MakeBullet("bullet1",&sdl.Rect{X:player.rect.X,Y:player.rect.Y,W:35,H:35},
+			player.addBullet(MakeBullet("bullet1",&sdl.Rect{X:player.rect.X,Y:player.rect.Y,W:1 *player.blockSize/3,H:1*player.blockSize/3},
 			player.renderer,player.blockSize,10,20,10,player.torret.torretRange,player.tankRotationAngle))
 		}
 		if !player.fire && player.alreadyFired{
@@ -219,6 +240,7 @@ func (player *Player)IsAlive()bool{
 func (player *Player)Free(){
 	player.tankTexture.Destroy()
 	player.torret.torretTexture.Destroy()
+	player.nameTexture.Destroy()
 	for _,chunk := range(player.chunks){
 		chunk.Free()
 
@@ -234,6 +256,11 @@ func (player *Player)HandleCollision(other Entity){
 			if collision{
 				player.xSpeed *= -1
 				player.ySpeed *= -1
+				player.health -= 5
+				if player.health <=0{
+					player.health = 0
+				}
+				player.healthBarRect.W -= player.healthBarRect.W *(100- (player.health*100/100))/100
 				player.Move()
 			}
 		}
