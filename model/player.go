@@ -133,9 +133,7 @@ func (player *Player)handleEvents(eventType,key int){
 				break
 			case "FIRE":
 				player.fire = true
-				player.chunks[2].Play(2,0)
-					
-				
+				player.chunks[2].Play(2,0)				
 
 				break	
 			}
@@ -202,25 +200,6 @@ func (player *Player)Tick(eventType,key int){
 
 	player.Fire()
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 }
 func calculateSpeed(speed float64,rotationAngle float64) (float64,float64){
 	radAngle1 :=  (180-rotationAngle) * math.Pi/180
@@ -240,6 +219,10 @@ func (player *Player)IsAlive()bool{
 func (player *Player)Free(){
 	player.tankTexture.Destroy()
 	player.torret.torretTexture.Destroy()
+	for _,chunk := range(player.chunks){
+		chunk.Free()
+
+	}
 
 }
 func (player *Player)HandleCollision(other Entity){
