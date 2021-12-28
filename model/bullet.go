@@ -53,9 +53,9 @@ func MakeBullet(name string,rect *sdl.Rect,renderer *sdl.Renderer,blockSize int3
 }
 func (bullet *Bullet)Render(renderer *sdl.Renderer,camera *sdl.Rect){
 	renderer.CopyEx(bullet.texture, &sdl.Rect{X:0,Y:0,W:50,H:50}, bullet.rect, bullet.rotationAngle , nil,sdl.FLIP_NONE);
-	renderer.SetDrawColor(0,0, 0, 255)
-	renderer.DrawRect(bullet.collisionRect)
-	renderer.SetDrawColor(193, 154, 107, 255)
+	
+	
+	
 
 }
 func outOfRange(initialRect, currentRect *sdl.Rect, bulletRange int32) bool{
@@ -108,4 +108,8 @@ func (bullet *Bullet)HandleCollision(other Entity){
 }
 func(bullet *Bullet)IsRigid()bool{
 	return bullet.isRigid
+}
+func (bullet *Bullet)GetRect()*sdl.Rect{
+	return bullet.rect
+
 }

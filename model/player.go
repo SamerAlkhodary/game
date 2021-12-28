@@ -2,6 +2,7 @@ package model
 import (
 	"fmt"
 	"github.com/veandco/go-sdl2/sdl"
+	"github.com/veandco/go-sdl2/mix"
 	"math"
 	"log"
 )
@@ -15,6 +16,7 @@ import (
 	ySpeed float64
 	baseSpeed float64
 	rotationSpeed int
+	rotation int
 	tankTexture *sdl.Texture
 	tankRotationAngle float64
 	keyController * KeyController
@@ -26,6 +28,9 @@ import (
 	addBullet func(Entity)
 	isRigid bool
 	collisionRect *sdl.Rect
+	chunks []*mix.Chunk
+	hasPlayedSounds []bool
+	move bool
 
 
 }
@@ -35,15 +40,33 @@ func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockS
 	tankPath := "images/tank/"
 	tankSurface := spriteLoader(tankPath+"tank.bmp")
 	tankTexture:= textureMaker(tankSurface,renderer)
-
-
+	mix.Init(mix.INIT_FLAC)
+	mix.OpenAudio(mix.DEFAULT_FREQUENCY,mix.DEFAULT_FORMAT,mix.DEFAULT_CHANNELS,mix.DEFAULT_CHUNKSIZE)
+	chunk1,err:= mix.LoadWAV("audio/movingTank.wav")
+	chunk2,err:= mix.LoadWAV("audio/engine.wav")
+	chunk3,err:= mix.LoadWAV("audio/fire.wav")
+	
+	
+	
+	chunks:= make([]*mix.Chunk,0)
+	if err!=nil{
+		log.Println(err)
+	}
+	chunks = append(chunks,chunk1)
+	chunks = append(chunks,chunk2)
+	chunks = append(chunks,chunk3)
+	mix.Volume(1,10)
+	mix.Volume(0,50)
+	mix.Volume(2,50)
 	return &Player{
 		name:name,
 		tankTexture: tankTexture,
 		id:id,
 		pos:pos,
+		rotation:0,
 		isAlive:true,
-		fire : true,
+		fire : false,
+		move:false,
 		keyController:keyController,
 		rect:rect,
 		collisionRect: &sdl.Rect{X:rect.X+10*100/blockSize,Y:rect.Y+10*100/blockSize,W:rect.W-20*100/blockSize,H:rect.H-20*100/blockSize},
@@ -58,6 +81,8 @@ func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockS
 		addBullet:addBullets,
 		renderer : renderer,
 		isRigid:true,
+		hasPlayedSounds: []bool{false,false,false},
+		chunks:chunks,
 		
 	}
 
@@ -69,43 +94,73 @@ func (player *Player) String() string{
 func (player *Player)Render(renderer *sdl.Renderer,camera *sdl.Rect){
 	renderer.CopyEx(player.tankTexture, &sdl.Rect{X:0,Y:0,W:200,H:200}, player.rect, player.tankRotationAngle , nil,sdl.FLIP_NONE);
 	renderer.CopyEx(player.torret.torretTexture, &sdl.Rect{X:0,Y:0,W:200,H:200}, player.torret.torretRect, player.torret.rotationAngle , nil,sdl.FLIP_NONE);
-	renderer.SetDrawColor(0,0, 0, 255)
-	renderer.DrawRect(player.collisionRect)
-	renderer.SetDrawColor(193, 154, 107, 255)
+	
+	
+	
+
 }
 func (player *Player)handleEvents(eventType,key int){
 	action,isValid :=player.keyController.HandleKey(key)
-	rotation,move,fire:=0,false,false
 	if isValid{
 		if eventType == sdl.KEYUP{
+			switch action{
+				case "MOVE":
+					player.move = false
+					break
+				case "NORTH":
+					player.rotation = 0
+							
+				case "SOUTH":
+					player.rotation = 0
+					break 
+				case "FIRE":
+					player.fire = false
+					break	
+				
+			}
 		
 		}else if eventType == sdl.KEYDOWN{
 			switch action{
 			case "NORTH":
-				rotation = -1
+				player.rotation = -1
 			
 			case "SOUTH":
-				rotation = 1
+				player.rotation = 1
 				break 
 			case "MOVE":
-				move = true
+				player.move = true
 				
 				break
 			case "FIRE":
-				log.Println(eventType,key)
-				fire = true
+				player.fire = true
+				player.chunks[2].Play(2,0)
+					
+				
+
 				break	
 			}
 		}
 	}
-	player.rotationSpeed = 10 * rotation
-	if move{
+	player.rotationSpeed = 10 * player.rotation
+	if player.move{
+		if !player.hasPlayedSounds[0]{
+			player.chunks[0].Play(0,10)
+			player.hasPlayedSounds[0]=true
+		}
 		player.xSpeed,player.ySpeed = calculateSpeed(player.baseSpeed,player.tankRotationAngle)
+		mix.Pause(1)
+		mix.Resume(0)
 	}else{
+		mix.Pause(0)
+		mix.Resume(1)
+		if !player.hasPlayedSounds[1]{
+			player.chunks[1].Play(1,10)
+			player.hasPlayedSounds[1]=true
+		}
 		player.xSpeed,player.ySpeed =0,0
 	}
 
-	player.fire = fire
+ 
 }
 func(player *Player) Move(){
 	player.rect.X += int32(player.xSpeed)
@@ -116,8 +171,9 @@ func(player *Player) Move(){
 	player.torret.torretRect.Y += int32(player.ySpeed)
 }
 func (player *Player) Fire(){
-	if player.fire{
-		log.Println("before",player.torret.torretRect.X,player.fire)
+
+	if player.fire &&  !player.alreadyFired{
+		
 
 		xOffSet,yOffSet:= calculateSpeed(player.torret.baseTorretSpeed,player.torret.rotationAngle)		
 			player.torret.torretRect.Y -= int32(yOffSet)
@@ -134,7 +190,6 @@ func (player *Player) Fire(){
 			player.torret.torretXOffset = 0
 			player.torret.torretYOffset = 0
 			player.alreadyFired = false
-			log.Println("after",player.torret.torretRect.X)
 
 		}
 }
@@ -205,4 +260,8 @@ func (player *Player)HandleCollision(other Entity){
 }
 func(player *Player)IsRigid()bool{
 	return player.isRigid
+}
+func (player *Player)GetRect()*sdl.Rect{
+	return player.rect
+
 }

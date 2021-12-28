@@ -10,5 +10,6 @@ type Entity interface{
 	Free()
 	HandleCollision(other Entity)
 	IsRigid()bool
+	GetRect() *sdl.Rect
 
 }

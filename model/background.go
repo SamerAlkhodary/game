@@ -64,3 +64,7 @@ func (bg *Background)IsRigid()bool{
 	return false
 
 }
+func (bg *Background)GetRect()*sdl.Rect{
+	return nil
+
+}
