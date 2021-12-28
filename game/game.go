@@ -2,7 +2,6 @@ package game
 import (
 		"game/model"
 		"github.com/veandco/go-sdl2/sdl"
-		"log"
 	)
 type Game struct{
 	entities []model.Entity
@@ -11,47 +10,35 @@ type Game struct{
 	explosions []model.Entity
 	window *sdl.Window
 	renderer *sdl.Renderer
-	camera *sdl.Rect
 	width int32
 	height int32
+	stateChanger func (string)
 	absolutePos *model.Pos
 	xSpeed,ySpeed int32
 	frames uint32
 	mapTiles [][]int32
 	blockSize int32
+	running bool
 	player model.Entity
 }
 
-func Init(width,height int32,blockSize int32,tiles [][]int32) *Game{
+func Init(width,height int32,blockSize int32,tiles [][]int32,renderer *sdl.Renderer,stateChanger func (string) ) *Game{
 	
-	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
-		panic(err)
-	}
-
-	window, err := sdl.CreateWindow("Game", sdl.WINDOWPOS_UNDEFINED, sdl.WINDOWPOS_UNDEFINED,
-		width, height, sdl.WINDOW_SHOWN)
-	if err != nil {
-		panic(err)
-	}
-	renderer, err := sdl.CreateRenderer(window, -1, sdl.RENDERER_ACCELERATED)
-	if err != nil {
-		log.Printf("Failed to create renderer: %s\n", err)
-	}
 
 	game:= &Game{
 		entities:make([]model.Entity, 0),
 		bullets: make([]model.Entity, 0),
 		explosions :make([]model.Entity, 0),
 		players:make([]model.Entity, 0),
-		window:window,
 		renderer:renderer,
-		camera : &sdl.Rect{X:0,Y:0,W:width,H:height},
 		width: width,
 		height:height,
 		absolutePos: model.MakePos(0,0),
 		frames : 30,
 		blockSize:blockSize,
 		mapTiles:tiles,
+		stateChanger: stateChanger,
+		running:true,
 	} 
 	game.initEntities()
 	return game
@@ -104,26 +91,31 @@ func (game *Game)AddEntity(e model.Entity){
 	
 }
 
-func  (game *Game) render(){
+func  (game *Game) Render(){
 	
 	for _,entity := range(game.entities){
-			entity.Render(game.renderer,game.camera)
+			entity.Render(game.renderer)
 		
 	}
 	for _,bullet := range(game.bullets){
-		bullet.Render(game.renderer,game.camera)
+		bullet.Render(game.renderer)
 	
 	}
 	for _,explosion := range(game.explosions){
-		explosion.Render(game.renderer,game.camera)
+		explosion.Render(game.renderer)
 		
 	}
 	for _,player := range(game.players){
-		player.Render(game.renderer,game.camera)
+		player.Render(game.renderer)
 		
 	}
 }
-func  (game *Game) tick(eventType, key int){
+func  (game *Game) Tick(event sdl.Event){
+	eventType,key,running:=handleEvent(event)
+	if running ==false{
+		game.stateChanger("Exit")
+	}
+	
 	for _,entity := range(game.entities){
 			entity.Tick(eventType,key)
 	}
@@ -172,41 +164,21 @@ func filterAlive(entities []model.Entity) ([]model.Entity,[]model.Entity){
 	return res,dead
 
 }
-func (game *Game) Run(){
-	running := true
-	eventType,key:=0,0
-	for running {
-		start:=sdl.GetTicks()
-		game.renderer.Clear()
-		game.render()
-		eventType,key,running=handleEvent()
-		game.tick(eventType,key)
-		game.renderer.Present()
-		if 1000/game.frames > sdl.GetTicks()-start{
-			sdl.Delay(1000/game.frames - (sdl.GetTicks()-start))
-
-		}
-	}
-	
-}
-func handleEvent()(int,int,bool){
+func handleEvent(event sdl.Event)(int,int,bool){
 		eventType :=0
-		key := 0
-		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
-			 
-				switch event.(type) {
-					case  *sdl.KeyboardEvent:
-						keyEvent,_ := event.(*sdl.KeyboardEvent)
-						eventType = int(event.GetType())
-						key = int(keyEvent.Keysym.Sym)
-					  break;
+		key := 0	 
+		switch event.(type) {
+			case  *sdl.KeyboardEvent:
+				keyEvent,_ := event.(*sdl.KeyboardEvent)
+				eventType = int(event.GetType())
+				key = int(keyEvent.Keysym.Sym)
+			break;
 			  
-					case *sdl.QuitEvent:
-							println("Quit")
-						return 0,0,false
-				}
-		
+			case *sdl.QuitEvent:
+					println("Quit")
+					return 0,0,false
 		}
+		
 		return eventType,key,true
 		
 }

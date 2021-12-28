@@ -106,7 +106,7 @@ func (player *Player) String() string{
 	return fmt.Sprintf("{Name:%s, id: %d, pos: %s}",player.name,player.id,player.pos.String())
 }
 
-func (player *Player)Render(renderer *sdl.Renderer,camera *sdl.Rect){
+func (player *Player)Render(renderer *sdl.Renderer){
 	renderer.CopyEx(player.tankTexture, &sdl.Rect{X:0,Y:0,W:200,H:200}, player.rect, player.tankRotationAngle , nil,sdl.FLIP_NONE);
 	renderer.CopyEx(player.torret.torretTexture, &sdl.Rect{X:0,Y:0,W:200,H:200}, player.torret.torretRect, player.torret.rotationAngle , nil,sdl.FLIP_NONE);
 	renderer.SetDrawColor(255, 0, 0, 255)

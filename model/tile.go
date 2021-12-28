@@ -83,7 +83,7 @@ func MakeTile(i,j int32, tileType int32, renderer *sdl.Renderer,blockSize int32)
 
 	}
 }
-func (tile *Tile) Render(renderer *sdl.Renderer,camera *sdl.Rect){
+func (tile *Tile) Render(renderer *sdl.Renderer){
 	renderer.Copy(tile.texture,tile.from,tile.rect)
 	renderer.SetDrawColor(0, 255, 0, 255)
 	renderer.DrawRect(tile.collisionRect)

@@ -30,7 +30,7 @@ func MakeBackground(image string,width int32, height int32,renderer *sdl.Rendere
 	}
 	
 }
-func (bg *Background)Render(renderer *sdl.Renderer,camera *sdl.Rect){
+func (bg *Background)Render(renderer *sdl.Renderer){
 	renderer.SetDrawColor(193, 154, 107, 255)
 	renderer.DrawRect(bg.rect)
 
