@@ -29,7 +29,7 @@ func Init()*Program{
 	if err != nil {
 		log.Printf("Failed to create renderer: %s\n", err)
 	}
-	stateManager := states.MakeStateManager()
+	stateManager := states.MakeStateManager(width,height,blockSize)
 	stateManager.Init(renderer)
 	return &Program{
 		renderer:renderer,
@@ -43,6 +43,7 @@ func Init()*Program{
 }
 func (program *Program)Run(){
 	for program.stateManager.IsRunning() {
+	program.currentState = program.stateManager.GetCurrentState()
 	event := eventGetter()
 	start:=sdl.GetTicks()
 	program.renderer.Clear()

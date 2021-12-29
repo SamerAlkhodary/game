@@ -13,15 +13,15 @@ type StateManager struct{
 	isRunning bool
 
 }
-func MakeStateManager()*StateManager{
+func MakeStateManager(width, height, blockSize int32)*StateManager{
 	states:= make(map[string]State)
-	states["MenuState"]= MakeMenuState()
+	states["MenuState"]= MakeMenuState(width, height, blockSize)
 	states["GameState"] = MakeGameState()
 	states["GameFinder"] = MakeGameFinderState()
 	
 	return &StateManager{
 		states:states,
-		currentState: states["GameState"], 
+		currentState: states["MenuState"], 
 		isRunning : true,
 	}
 }

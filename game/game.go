@@ -49,7 +49,7 @@ func (game *Game)initEntities(){
 	blockSize := game.blockSize
 	background := model.MakeBackground("game.mapTiles",game.width,game.height,game.renderer)
 	player1Rect := &sdl.Rect{ X:1*blockSize,Y:2*blockSize,W:1*blockSize,H:1*blockSize}
-	player1KeyControl := model.MakeKeyController('w','e',32,'l')
+	player1KeyControl := model.MakeKeyController('w','e',sdl.K_SPACE,sdl.K_RSHIFT)
 	player1 := model.MakePlayer("Samer",1,player1Rect,game.renderer,game.blockSize,player1KeyControl,game.AddBullet)
 
 
