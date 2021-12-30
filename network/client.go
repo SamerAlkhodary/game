@@ -4,10 +4,10 @@ import (
     "net"
     "bufio"
 	"strings"
+	"log"
 )
 type Client struct{
 	bufferSize int
-	connection *net.UDPConn
 	ip string
 	port string
 }
@@ -27,16 +27,19 @@ func (client *Client) SendAndReceive(request Request)Response{
     return nil
 	}
 	var response Response
-
+	log.Println("sent:",request.String())
 	fmt.Fprintf(conn, request.String())
 	_, err = bufio.NewReader(conn).Read(buffer)
 	if err != nil {
 		fmt.Printf("Some error %v\n", err)
 	} else {
 		data := strings.TrimSpace(string(buffer))
-		action := strings.Split(data," ")[0]
+		log.Println("recievied:",data)
+
+		action := strings.Split(data,";")[0]
+		log.Println("action:",action)
 		switch action{
-		case "GetGames":
+		case "GetGame":
 			response = &GetGameResponse{}
 			break;
 
@@ -53,6 +56,8 @@ func (client *Client) SendAndReceive(request Request)Response{
 			break;
 		}
 		response.FromString(data)
+		log.Println("recievied;",response)
+
 		
 	}
 	conn.Close()

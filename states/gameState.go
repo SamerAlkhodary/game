@@ -7,20 +7,27 @@ import (
 	"os"
 	"strings"
 	"strconv"
+	"game/network"
 )
 
 type GameState struct{
 	game *game.Game
 	stateManager *StateManager 
-
+	blockSize int32
+	width int32
+	height int32
+	client *network.Client
 }
 
-func MakeGameState()*GameState{
+func MakeGameState(client *network.Client,width,height,blockSize int32)*GameState{
 	game := &game.Game{}
 
 	return &GameState{
 		game:game,
-
+		width:width,
+		height:height,
+		blockSize: blockSize,
+		client:client,
 	}
 }
 func (gameState *GameState)SetStateManager(stateManager *StateManager){
@@ -28,8 +35,7 @@ func (gameState *GameState)SetStateManager(stateManager *StateManager){
 }
 func (gameState *GameState)Init(renderer *sdl.Renderer){
 	tiles:=readMap()
-	blockSize:= int32(100)
-	gameState.game = game.Init(16 * blockSize,10* blockSize,blockSize,tiles,renderer,gameState.stateManager.UpdateState)
+	gameState.game = game.Init(16 * gameState.blockSize,10* gameState.blockSize,gameState.blockSize,tiles,renderer,gameState.stateManager.UpdateState)
 
 }
 func (gameState *GameState)Render(){
@@ -68,5 +74,8 @@ func readMap()[][]int32{
 	return tiles
 
     
+
+}
+func(gameState *GameState)Show(){
 
 }

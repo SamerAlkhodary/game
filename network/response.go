@@ -3,6 +3,7 @@ import(
 	"strings"
 	"strconv"
 	"fmt"
+	"log"
 )
 
 type Response interface{
@@ -21,8 +22,9 @@ type GetGameResponse struct{
 }
 func (getGameResponse *GetGameResponse)FromString(info string){
 	//reposne format : GetGames;2;1&game1&2|2&game2&3
-
 	data := strings.Split(info,";")
+	log.Println("data:",data)
+
 	numberOfgames ,_ := strconv.Atoi(data[1])
 	games := make([]*GameStat,0)
 	if numberOfgames >0{

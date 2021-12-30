@@ -3,9 +3,11 @@ import(
 	"github.com/veandco/go-sdl2/sdl"
 	"game/states"
 	"log"
+	"game/network"
 )
 type Program struct{
 	renderer *sdl.Renderer
+	client *network.Client
 	stateManager *states.StateManager
 	currentState states.State
 	window *sdl.Window
@@ -15,6 +17,7 @@ type Program struct{
 }
 func Init()*Program{
 	blockSize:= int32(100)
+	client := network.CreateClient(2048,"127.0.0.1","4444")
 	width := 16 * blockSize
 	height:= 10* blockSize
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
@@ -29,12 +32,13 @@ func Init()*Program{
 	if err != nil {
 		log.Printf("Failed to create renderer: %s\n", err)
 	}
-	stateManager := states.MakeStateManager(width,height,blockSize)
+	stateManager := states.MakeStateManager(client,width,height,blockSize)
 	stateManager.Init(renderer)
 	return &Program{
 		renderer:renderer,
 		stateManager:stateManager,
 		window:window,
+		client:client,
 		width:width,
 		height:height,
 		frames : 30,

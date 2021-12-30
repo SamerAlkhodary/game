@@ -150,3 +150,6 @@ func textureMaker(surface *sdl.Surface,renderer *sdl.Renderer)*sdl.Texture{
 	}
 	return texture
 }
+func (menuState *MenuState)Show(){
+	
+}

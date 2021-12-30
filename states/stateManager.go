@@ -2,6 +2,7 @@ package states
 
 import(
 	"github.com/veandco/go-sdl2/sdl"
+	"game/network"
 	
 	
 )
@@ -13,11 +14,11 @@ type StateManager struct{
 	isRunning bool
 
 }
-func MakeStateManager(width, height, blockSize int32)*StateManager{
+func MakeStateManager(client *network.Client, width, height, blockSize int32)*StateManager{
 	states:= make(map[string]State)
 	states["MenuState"]= MakeMenuState(width, height, blockSize)
-	states["GameState"] = MakeGameState()
-	states["GameFinder"] = MakeGameFinderState(width, height, blockSize)
+	states["GameState"] = MakeGameState(client,width, height, blockSize)
+	states["GameFinder"] = MakeGameFinderState(client,width, height, blockSize)
 	
 	return &StateManager{
 		states:states,
@@ -32,10 +33,6 @@ func (stateManager *StateManager)Init(renderer *sdl.Renderer){
 	stateManager.states["MenuState"].Init(renderer)
 	stateManager.states["GameState"].Init(renderer)
 	stateManager.states["GameFinder"].Init(renderer)
-	
-	
-	
-	
 }
 func (stateManager *StateManager) UpdateState(stateName string){
 	if stateName == "Exit"{
@@ -43,6 +40,7 @@ func (stateManager *StateManager) UpdateState(stateName string){
 		return
 	}
 	stateManager.currentState = stateManager.states[stateName]
+	stateManager.currentState.Show()
 }
 func (stateManager *StateManager) GetCurrentState()State{
 	return stateManager.currentState

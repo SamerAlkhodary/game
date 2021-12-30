@@ -3,14 +3,13 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 	"github.com/veandco/go-sdl2/img"
+	"game/network"
+	"log"
 )
-type gameItem struct{
-	nbrPlayers string
-	id string
-	name string
-}
+
 type GameFinderState struct{
-	gameItems []*gameItem
+	gameItems []*network.GameStat
+	client *network.Client
 	titleTexts []string
 	titleRects []*sdl.Rect
 	gameStatRects []*sdl.Rect
@@ -31,7 +30,7 @@ type GameFinderState struct{
 	renderer *sdl.Renderer
 }
 
-func MakeGameFinderState(width, height, blockSize int32)*GameFinderState{
+func MakeGameFinderState(client *network.Client,width, height, blockSize int32)*GameFinderState{
 	buttonTexts :=[]string{"Create Game","Join Game","Back"}
 	titleTexts := []string{"Game ID","Name","Players"}
 	gameStatRects := make([]*sdl.Rect,0)
@@ -43,7 +42,7 @@ func MakeGameFinderState(width, height, blockSize int32)*GameFinderState{
 	titleTextures:= make([]*sdl.Texture,0)
 	textTextures:= make([]*sdl.Texture,0)
 	listRect := &sdl.Rect{X:blockSize,Y:blockSize,W:width/2, H:height - 2*blockSize}
-	items := make([]*gameItem,0)
+	items := make([]*network.GameStat,0)
 	
 	ttf.Init()
 	return &GameFinderState{
@@ -53,6 +52,7 @@ func MakeGameFinderState(width, height, blockSize int32)*GameFinderState{
 		titleTextures : titleTextures,
 		titleTexts : titleTexts,
 		gameItems: items,
+		client:client,
 		textRects : textRects,
 		buttonRects : buttonRects,
 		width:width,
@@ -75,6 +75,7 @@ func (gameFinderState *GameFinderState)Init(renderer *sdl.Renderer){
 	textRects:= make([]*sdl.Rect,0)
 	buttonRects:= make([]*sdl.Rect,0)	
 	width := gameFinderState.width
+
 	for i,text:=range(gameFinderState.buttonTexts){
 		sans,_ := ttf.OpenFont("fonts/SansBold.ttf",fontSize );
 		surface,_ := sans.RenderUTF8Solid(text,sdl.Color{R:105,G:105,B:105,A:255})
@@ -102,6 +103,7 @@ func (gameFinderState *GameFinderState)Init(renderer *sdl.Renderer){
 		gameFinderState.titleTextures = append(gameFinderState.titleTextures,texture)
 	}
 	gameFinderState.titleRects = titleRects
+
 	
 
 	path := "images/menu/"
@@ -115,7 +117,6 @@ func (gameFinderState *GameFinderState)Init(renderer *sdl.Renderer){
 	gameFinderState.renderer = renderer
 	surface.Free()
 	surface2.Free()
-	gameFinderState.addGameItem(&gameItem{nbrPlayers:"2",id:"1",name:"Game 1"},int(blockSize/4))
 
 }
 func (gameFinderState *GameFinderState)Render(){
@@ -160,7 +161,7 @@ func (gameFinderState *GameFinderState)Tick(event sdl.Event){
 		}else if  key == sdl.K_RETURN{
 			switch gameFinderState.selectedItem{
 				case 0:
-					gameFinderState.stateManager.UpdateState("GameState")	
+					gameFinderState.createGame()	
 				break
 				case 2:
 					gameFinderState.stateManager.UpdateState("MenuState")
@@ -170,22 +171,23 @@ func (gameFinderState *GameFinderState)Tick(event sdl.Event){
 	}
 	
 }
-func (gameFinderState *GameFinderState)addGameItem(item *gameItem,fontSize int){
+func (gameFinderState *GameFinderState)addGameItem(item *network.GameStat,fontSize int){
 
 	textures,rects:= createListRow(item,fontSize,gameFinderState.renderer,len(gameFinderState.gameItems),gameFinderState.blockSize)
 	gameFinderState.gameItems = append(gameFinderState.gameItems,item)
 	gameFinderState.gameStatRects = append(gameFinderState.gameStatRects, rects...)
 	gameFinderState.gameStatTextures = append(gameFinderState.gameStatTextures, textures...)
 }
-func createListRow(item *gameItem,fontSize int,renderer *sdl.Renderer,index int,blockSize int32)([]*sdl.Texture,[]*sdl.Rect){
+func createListRow(item *network.GameStat,fontSize int,renderer *sdl.Renderer,index int,blockSize int32)([]*sdl.Texture,[]*sdl.Rect){
 	resTextures := []*sdl.Texture{}
 	resRects := []*sdl.Rect{} 
 
 	sans,_ := ttf.OpenFont("fonts/Sans.ttf",fontSize);
-	surface1,_ := sans.RenderUTF8Solid(item.id,sdl.Color{R:0,G:0,B:0,A:255})
-	surface2,_ := sans.RenderUTF8Solid(item.name,sdl.Color{R:0,G:0,B:0,A:255})
-	surface3,_ := sans.RenderUTF8Solid(item.nbrPlayers,sdl.Color{R:0,G:0,B:0,A:255})
+	surface1,_ := sans.RenderUTF8Solid(item.GameId,sdl.Color{R:0,G:0,B:0,A:255})
+	surface2,_ := sans.RenderUTF8Solid(item.GameName,sdl.Color{R:0,G:0,B:0,A:255})
+	surface3,_ := sans.RenderUTF8Solid(item.NbrPlayers,sdl.Color{R:0,G:0,B:0,A:255})
 	texture1,_ := renderer.CreateTextureFromSurface(surface1)
+
 	_,_,w1,h1,_ := texture1.Query()
 	texture2,_ := renderer.CreateTextureFromSurface(surface2)
 	_,_,w2,h2,_ := texture2.Query()
@@ -207,4 +209,33 @@ func createListRow(item *gameItem,fontSize int,renderer *sdl.Renderer,index int,
 	resRects=append(resRects,rect2)
 	resRects=append(resRects,rect3)
 	return resTextures,resRects
+}
+func  (gameFinderState *GameFinderState)GetGames(){
+	resp := gameFinderState.client.SendAndReceive(
+		&network.GetGameRequest{
+			PlayerId:"0",
+		})
+	response := resp.(*network.GetGameResponse)
+	log.Println("games",response.Games)
+	if len(response.Games)>0{
+		log.Println("adding game",response.Games[0])
+		for _,game := range(response.Games){
+			gameFinderState.addGameItem(game,int(gameFinderState.blockSize/4)) 
+
+		}
+
+	}
+
+}
+func  (gameFinderState *GameFinderState)createGame(){
+	resp := gameFinderState.client.SendAndReceive(
+		&network.CreateGameRequest{
+			PlayerId:"0",
+			Data:"",
+		})
+	response := resp.(*network.CreateGameResponse)
+	log.Println(response)
+}
+func (gameFinderState *GameFinderState)Show(){
+	gameFinderState.GetGames()
 }

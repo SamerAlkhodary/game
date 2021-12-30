@@ -7,5 +7,6 @@ type State interface{
 	Tick(sdl.Event)
 	Init(*sdl.Renderer)
 	SetStateManager(stateManager *StateManager)
+	Show()
 
 }
