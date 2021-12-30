@@ -109,6 +109,10 @@ func (menuState *MenuState)Tick(event sdl.Event){
 				menuState.stateManager.UpdateState("GameState")
 			
 			break
+			case 1:
+				menuState.stateManager.UpdateState("GameFinder")
+					
+			break
 			case 2:
 				menuState.stateManager.UpdateState("Exit")
 

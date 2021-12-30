@@ -50,7 +50,7 @@ func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockS
 	sans,_ := ttf.OpenFont("fonts/SansBold.ttf", 28);
 	surface,_ := sans.RenderUTF8Solid(name,sdl.Color{R:0,G:0,B:0,A:255})
 	texture,_:=renderer.CreateTextureFromSurface( surface);
-	healthBarBackgroundRect:= &sdl.Rect{X: blockSize, Y:blockSize/4,W:5*blockSize,H:blockSize/2}
+	healthBarBackgroundRect:= &sdl.Rect{X: blockSize + (8*blockSize * int32(id)), Y:blockSize/4,W:5*blockSize,H:blockSize/2}
 	mix.Init(mix.INIT_FLAC)
 	mix.OpenAudio(mix.DEFAULT_FREQUENCY,mix.DEFAULT_FORMAT,mix.DEFAULT_CHANNELS,mix.DEFAULT_CHUNKSIZE)
 	chunk1,err:= mix.LoadWAV("audio/movingTank.wav")
@@ -80,7 +80,7 @@ func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockS
 		keyController:keyController,
 		rect:rect,
 		collisionRect: &sdl.Rect{X:rect.X+blockSize*10/100,Y:rect.Y+blockSize*10/100,W:rect.W-blockSize*25/100,H:rect.H-blockSize*25/100},
-		healthBarRect: &sdl.Rect{X: blockSize, Y:blockSize/4,W:5*blockSize,H:blockSize/2},
+		healthBarRect: &sdl.Rect{X: blockSize + (8*blockSize * int32(id)), Y:blockSize/4,W:5*blockSize,H:blockSize/2},
 		healthBarBackgroundRect:healthBarBackgroundRect,
 		rotationSpeed:1,
 		xSpeed:1,
@@ -96,7 +96,7 @@ func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockS
 		hasPlayedSounds: []bool{false,false,false},
 		chunks:chunks,
 		nameTexture:texture,
-		nameRect: &sdl.Rect{X:(healthBarBackgroundRect.X+healthBarBackgroundRect.W)/2,Y:(healthBarBackgroundRect.Y+healthBarBackgroundRect.H)/3,W:blockSize,H:blockSize/2},
+		nameRect: &sdl.Rect{X:(healthBarBackgroundRect.X+healthBarBackgroundRect.W)/2+ (8*blockSize * int32(id))/2,Y:(healthBarBackgroundRect.Y+healthBarBackgroundRect.H)/3,W:blockSize,H:blockSize/2},
 		
 	}
 

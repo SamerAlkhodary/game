@@ -17,7 +17,7 @@ func MakeStateManager(width, height, blockSize int32)*StateManager{
 	states:= make(map[string]State)
 	states["MenuState"]= MakeMenuState(width, height, blockSize)
 	states["GameState"] = MakeGameState()
-	states["GameFinder"] = MakeGameFinderState()
+	states["GameFinder"] = MakeGameFinderState(width, height, blockSize)
 	
 	return &StateManager{
 		states:states,

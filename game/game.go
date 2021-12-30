@@ -48,11 +48,16 @@ func Init(width,height int32,blockSize int32,tiles [][]int32,renderer *sdl.Rende
 func (game *Game)initEntities(){
 	blockSize := game.blockSize
 	background := model.MakeBackground("game.mapTiles",game.width,game.height,game.renderer)
-	player1Rect := &sdl.Rect{ X:1*blockSize,Y:2*blockSize,W:1*blockSize,H:1*blockSize}
+	player1Rect := &sdl.Rect{ X:4*blockSize,Y:2*blockSize,W:1*blockSize,H:1*blockSize}
+	player2Rect := &sdl.Rect{ X:1*blockSize,Y:2*blockSize,W:1*blockSize,H:1*blockSize}
+
 	player1KeyControl := model.MakeKeyController('w','e',sdl.K_SPACE,sdl.K_RSHIFT)
-	player1 := model.MakePlayer("Samer",1,player1Rect,game.renderer,game.blockSize,player1KeyControl,game.AddBullet)
+	player1 := model.MakePlayer("Samer",0,player1Rect,game.renderer,game.blockSize,player1KeyControl,game.AddBullet)
+	player2 := model.MakePlayer("Samer",1,player2Rect,game.renderer,game.blockSize,player1KeyControl,game.AddBullet)
 	game.player = player1
 	game.players = append(game.players,player1)
+	game.players = append(game.players,player2)
+
 	game.AddEntity(background)	
 	for i ,_:= range(game.mapTiles){
 		for j,_ := range(game.mapTiles[i]){
