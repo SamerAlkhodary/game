@@ -1,62 +1,103 @@
 package network
 import(
 	"strings"
+	"strconv"
+	"fmt"
 )
 
 type Response interface{
 	FromString(info string)
 
 }
-type GetGameResponse struct{
+type  GameStat struct{
 	GameName string
-	Action string
 	GameId string
 	NbrPlayers string
+
+}
+type GetGameResponse struct{
+	Games []*GameStat
+	
 }
 func (getGameResponse *GetGameResponse)FromString(info string){
-	data := strings.Split(info,";")
-	getGameResponse.Action = data[0]
-	getGameResponse.GameName = data[1]
-	getGameResponse.GameId = data[2]
-	getGameResponse.NbrPlayers = data[3]
-}
+	//reposne format : GetGames;2;1&game1&2|2&game2&3
 
-type InGameResponse struct{
+	data := strings.Split(info,";")
+	numberOfgames ,_ := strconv.Atoi(data[1])
+	games := make([]*GameStat,0)
+	if numberOfgames >0{
+		gamesInfo := strings.Split(data[2],"|")
+		for _,game:= range(gamesInfo){
+			gameStat := &GameStat{}
+			info := strings.Split(game,"&")
+			gameStat.GameId = info[0]
+			gameStat.GameName = info[1]
+			gameStat.NbrPlayers = info[2]
+			games = append(games,gameStat)
+		}
+	}
+	getGameResponse.Games = games
+}
+type Data struct{
 	PlayerId string
+	PlayerX string
+	PlayerY string
+	PlayerRotationAngle string
+}
+func (data *Data)String()string{
+	return fmt.Sprintf("%s&%s&%s&%s",data.PlayerId,data.PlayerX, data.PlayerY, data.PlayerRotationAngle)
+}
+type InGameResponse struct{
 	GameId string
-	Action string
-	Data string
+	Data []*Data
+	
 
 }
 func (inGameResponse *InGameResponse)FromString(info string){
+	//reposne format : InGame;2;0&10&20&15|1&10&20&15
+
 	data := strings.Split(info,";")
-	inGameResponse.Action = data[0]
-	inGameResponse.PlayerId = data[1]
-	inGameResponse.GameId = data[2]
-	inGameResponse.Data = data[3]
+	inGameResponse.GameId = data[1]
+
+	numberOfDataRecieved,_ := strconv.Atoi(data[3])
+	dataList := make([]*Data,0)
+	if numberOfDataRecieved > 0 {
+		gamesInfo := strings.Split(data[4],"|")
+
+		for _,game:= range(gamesInfo){
+			data:=&Data{}
+			info := strings.Split(game,"&")
+			data.PlayerId = info[0]
+			data.PlayerX = info[1]
+			data.PlayerY = info[2]
+			data.PlayerRotationAngle = info[3]
+			dataList = append(dataList,data)
+		}
+
+	}
+	inGameResponse.Data = dataList
 }
 
 type CreateGameResponse struct{
 	GameId string
-	Action string
+	PlayerId string
 
 }
 func (createGameResponse *CreateGameResponse)FromString(info string){
 	data := strings.Split(info,";")
-	createGameResponse.Action = data[0]
 	createGameResponse.GameId = data[1]
+	createGameResponse.PlayerId = data[2]
+
 }
 
 type JoinGameResponse struct{
 	PlayerId string
-	Action string
 	GameId string
 	Data string
 
 }
 func (joinGameResponse *JoinGameResponse)FromString(info string){
 	data := strings.Split(info,";")
-	joinGameResponse.Action = data[0]
 	joinGameResponse.PlayerId = data[1]
 	joinGameResponse.GameId = data[2]
 	joinGameResponse.Data = data[3]

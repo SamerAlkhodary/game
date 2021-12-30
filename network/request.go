@@ -12,18 +12,19 @@ type GetGameRequest struct{
 	Action string
 }
 func (getGameRequest *GetGameRequest) String()string{
-	return fmt.Sprintf("%s;%s",getGameRequest.Action,getGameRequest.PlayerId)
+	return fmt.Sprintf("%s;%s","GetGames",getGameRequest.PlayerId)
 }
 
 type InGameRequest struct{
 	PlayerId string
 	GameId string
+	NumberOfData string
 	Action string
-	Data string
-
+	Data *Data
 }
 func (inGameRequest *InGameRequest) String()string{
-	return fmt.Sprintf("%s;%s;%s;%s",inGameRequest.Action,inGameRequest.PlayerId,inGameRequest.GameId,inGameRequest.Data)
+	fmt.Println(inGameRequest.Data.String())
+	return fmt.Sprintf("%s;%s;%s;%s;%s","InGame",inGameRequest.PlayerId,inGameRequest.GameId,"1",inGameRequest.Data.String())
 }
 
 type CreateGameRequest struct{
@@ -40,10 +41,10 @@ type JoinGameRequest struct{
 	PlayerId string
 	Action string
 	GameId string
-	Data string
+	Name string
 
 }
 func (joinGameRequest *JoinGameRequest) String()string{
-	return fmt.Sprintf("%s;%s;%s;%s",joinGameRequest.Action,joinGameRequest.PlayerId,joinGameRequest.GameId,joinGameRequest.Data)
+	return fmt.Sprintf("%s;%s;%s;%s",joinGameRequest.Action,joinGameRequest.PlayerId,joinGameRequest.GameId,joinGameRequest.Name)
 }
 
