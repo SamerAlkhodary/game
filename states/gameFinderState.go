@@ -3,7 +3,6 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 	"github.com/veandco/go-sdl2/img"
-	"log"
 )
 type gameItem struct{
 	nbrPlayers string
@@ -187,7 +186,6 @@ func createListRow(item *gameItem,fontSize int,renderer *sdl.Renderer,index int,
 	surface2,_ := sans.RenderUTF8Solid(item.name,sdl.Color{R:0,G:0,B:0,A:255})
 	surface3,_ := sans.RenderUTF8Solid(item.nbrPlayers,sdl.Color{R:0,G:0,B:0,A:255})
 	texture1,_ := renderer.CreateTextureFromSurface(surface1)
-	log.Println(texture1)
 	_,_,w1,h1,_ := texture1.Query()
 	texture2,_ := renderer.CreateTextureFromSurface(surface2)
 	_,_,w2,h2,_ := texture2.Query()

@@ -11,7 +11,7 @@ type Program struct{
 	window *sdl.Window
 	width int32
 	height int32
-	frames uint32
+	frames uint32 
 }
 func Init()*Program{
 	blockSize:= int32(100)
