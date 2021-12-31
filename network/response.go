@@ -3,7 +3,6 @@ import(
 	"strings"
 	"strconv"
 	"fmt"
-	"log"
 )
 
 type Response interface{
@@ -18,17 +17,17 @@ type  GameStat struct{
 }
 type GetGameResponse struct{
 	Games []*GameStat
+	PlayerId string
 	
 }
 func (getGameResponse *GetGameResponse)FromString(info string){
 	//reposne format : GetGames;2;1&game1&2|2&game2&3
 	data := strings.Split(info,";")
-	log.Println("data:",data)
-
+	playerId := data[2]
 	numberOfgames ,_ := strconv.Atoi(data[1])
 	games := make([]*GameStat,0)
 	if numberOfgames >0{
-		gamesInfo := strings.Split(data[2],"|")
+		gamesInfo := strings.Split(data[3],"|")
 		for _,game:= range(gamesInfo){
 			gameStat := &GameStat{}
 			info := strings.Split(game,"&")
@@ -39,6 +38,7 @@ func (getGameResponse *GetGameResponse)FromString(info string){
 		}
 	}
 	getGameResponse.Games = games
+	getGameResponse.PlayerId= playerId
 }
 type Data struct{
 	PlayerId string
@@ -81,14 +81,20 @@ func (inGameResponse *InGameResponse)FromString(info string){
 }
 
 type CreateGameResponse struct{
-	GameId string
+	Game *GameStat
 	PlayerId string
 
 }
 func (createGameResponse *CreateGameResponse)FromString(info string){
 	data := strings.Split(info,";")
-	createGameResponse.GameId = data[1]
+	game := &GameStat{
+		GameId:data[1],
+		GameName:fmt.Sprintf("Game%s",data[1]),
+		NbrPlayers: "1",
+
+	}
 	createGameResponse.PlayerId = data[2]
+	createGameResponse.Game = game
 
 }
 

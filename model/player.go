@@ -9,7 +9,7 @@ import (
 )
  type Player struct{
 	name string
-	id int 
+	id string 
 	pos *Pos
 	rect *sdl.Rect
 	healthBarRect *sdl.Rect
@@ -40,7 +40,7 @@ import (
 
 
 }
-func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockSize int32,keyController *KeyController, addBullets func(Entity))*Player{
+func MakePlayer(name string, id string,rect *sdl.Rect,renderer *sdl.Renderer,blockSize int32,keyController *KeyController, addBullets func(Entity))*Player{
 	torret := MakeTorret("torret1",&sdl.Rect{X:rect.X,Y:rect.Y,W:rect.W,H:rect.H},4,500,renderer,1)
 	pos := MakePos(rect.X,rect.Y)
 	tankPath := "images/tank/"
@@ -50,7 +50,32 @@ func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockS
 	sans,_ := ttf.OpenFont("fonts/SansBold.ttf", 28);
 	surface,_ := sans.RenderUTF8Solid(name,sdl.Color{R:0,G:0,B:0,A:255})
 	texture,_:=renderer.CreateTextureFromSurface( surface);
-	healthBarBackgroundRect:= &sdl.Rect{X: blockSize + (8*blockSize * int32(id)), Y:blockSize/4,W:5*blockSize,H:blockSize/2}
+	var healthBarBackgroundRect,healthBarRect,playerRect,nameRect  *sdl.Rect
+	switch id{
+	case "-1":
+		healthBarBackgroundRect= &sdl.Rect{X: blockSize , Y:blockSize/4,W:5*blockSize,H:blockSize/2}
+		healthBarRect = &sdl.Rect{X: blockSize , Y:blockSize/4,W:5*blockSize,H:blockSize/2}
+		nameRect = &sdl.Rect{X:(healthBarBackgroundRect.X+healthBarBackgroundRect.W)/2,
+			Y:(healthBarBackgroundRect.Y+healthBarBackgroundRect.H)/3,W:blockSize,H:blockSize/2}
+		playerRect = rect
+		break
+	case "1":
+		healthBarBackgroundRect= &sdl.Rect{X: blockSize , Y:blockSize/4,W:5*blockSize,H:blockSize/2}
+		healthBarRect = &sdl.Rect{X: blockSize , Y:blockSize/4,W:5*blockSize,H:blockSize/2}
+		nameRect = &sdl.Rect{X:(healthBarBackgroundRect.X+healthBarBackgroundRect.W)/2,
+			Y:(healthBarBackgroundRect.Y+healthBarBackgroundRect.H)/3,W:blockSize,H:blockSize/2}
+		playerRect = rect
+		break
+	case "2":
+		healthBarBackgroundRect:= &sdl.Rect{X: blockSize+(8*blockSize) , Y:blockSize/4,W:5*blockSize,H:blockSize/2}
+		healthBarRect = &sdl.Rect{X: blockSize +(8*blockSize), Y:blockSize/4,W:5*blockSize,H:blockSize/2}
+		rect.X =+5*blockSize
+		playerRect = rect
+		nameRect = &sdl.Rect{X:(healthBarBackgroundRect.X+healthBarBackgroundRect.W)/2+(8*blockSize)/2,
+			Y:(healthBarBackgroundRect.Y+healthBarBackgroundRect.H)/3,W:blockSize,H:blockSize/2}
+		break
+		
+	}
 	mix.Init(mix.INIT_FLAC)
 	mix.OpenAudio(mix.DEFAULT_FREQUENCY,mix.DEFAULT_FORMAT,mix.DEFAULT_CHANNELS,mix.DEFAULT_CHUNKSIZE)
 	chunk1,err:= mix.LoadWAV("audio/movingTank.wav")
@@ -78,9 +103,9 @@ func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockS
 		health: 100,
 		move:false,
 		keyController:keyController,
-		rect:rect,
+		rect:playerRect,
 		collisionRect: &sdl.Rect{X:rect.X+blockSize*10/100,Y:rect.Y+blockSize*10/100,W:rect.W-blockSize*25/100,H:rect.H-blockSize*25/100},
-		healthBarRect: &sdl.Rect{X: blockSize + (8*blockSize * int32(id)), Y:blockSize/4,W:5*blockSize,H:blockSize/2},
+		healthBarRect: healthBarRect,
 		healthBarBackgroundRect:healthBarBackgroundRect,
 		rotationSpeed:1,
 		xSpeed:1,
@@ -96,7 +121,7 @@ func MakePlayer(name string, id int,rect *sdl.Rect,renderer *sdl.Renderer,blockS
 		hasPlayedSounds: []bool{false,false,false},
 		chunks:chunks,
 		nameTexture:texture,
-		nameRect: &sdl.Rect{X:(healthBarBackgroundRect.X+healthBarBackgroundRect.W)/2+ (8*blockSize * int32(id))/2,Y:(healthBarBackgroundRect.Y+healthBarBackgroundRect.H)/3,W:blockSize,H:blockSize/2},
+		nameRect: nameRect,
 		
 	}
 

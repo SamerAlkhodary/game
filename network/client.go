@@ -10,6 +10,8 @@ type Client struct{
 	bufferSize int
 	ip string
 	port string
+	isOnline bool
+	responseChannel chan Response
 }
 func CreateClient(bufferSize int, ip string, port string)*Client{
 
@@ -17,51 +19,74 @@ func CreateClient(bufferSize int, ip string, port string)*Client{
 		bufferSize:bufferSize,
 		ip : ip,
 		port: port,
+		isOnline:false,
+		responseChannel : make(chan Response,10),
 	}
 }
-func (client *Client) SendAndReceive(request Request)Response{
+func (client *Client) Listen(playerId string){
+	if playerId != "-1"{
+		return
+	}
+	client.isOnline=true
+	log.Println("Listening to the server")
 	buffer :=  make([]byte, client.bufferSize)
 	conn, err := net.Dial("udp", client.ip +":"+client.port)
 	if err != nil {
-   		 fmt.Printf("Some error %v", err)
-    return nil
-	}
+		fmt.Printf("Some error %v", err)
+   	return 
+   }
+   request := &GetGameRequest{
+	   PlayerId: playerId,
+   }
+   fmt.Fprintf(conn, request.String())
+   
+   for client.isOnline{
 	var response Response
-	log.Println("sent:",request.String())
-	fmt.Fprintf(conn, request.String())
 	_, err = bufio.NewReader(conn).Read(buffer)
 	if err != nil {
-		fmt.Printf("Some error %v\n", err)
+	fmt.Printf("Some error %v\n", err)
 	} else {
-		data := strings.TrimSpace(string(buffer))
-		log.Println("recievied:",data)
+	data := strings.TrimSpace(string(buffer))
+	log.Println("recievied:",data)
+	action := strings.Split(data,";")[0]
+	log.Println("action:",action)
+	switch action{
+	case "GetGame":
+		response = &GetGameResponse{}
 
-		action := strings.Split(data,";")[0]
-		log.Println("action:",action)
-		switch action{
-		case "GetGame":
-			response = &GetGameResponse{}
-			break;
-
-		case "InGame":
-			response = &InGameResponse{}
-			break;
-
-		case "CreateGame":
-			response = &CreateGameResponse{}
-			break;
-
-		case "JoinGame":
-			response = &JoinGameResponse{}
-			break;
-		}
-		response.FromString(data)
-		log.Println("recievied;",response)
-
+		break;
+	case "InGame":
+		response = &InGameResponse{}
+		break;
+	case "CreateGame":
+		response = &CreateGameResponse{}
+		break;
+	case "JoinGame":
+		response = &JoinGameResponse{}
+		break;
+	}
+	response.FromString(data)
+	log.Println("recievied;",response)
 		
 	}
-	conn.Close()
-	return response
+	log.Println("recieved response")
+	client.responseChannel <- response
+   }
+	defer conn.Close()
+}
+func (client *Client) Send(request Request){
+	conn, err := net.Dial("udp", client.ip +":"+client.port)
+	if err != nil {
+   		 fmt.Printf("Some error %v", err)
+    return 
+	}
+	log.Println("sent:",request.String())
+	fmt.Fprintf(conn, request.String())
+	defer conn.Close()
+}
+func (client *Client)GetResponse()Response{
+	return <-client.responseChannel
+
 }
 
 

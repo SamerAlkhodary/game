@@ -2,16 +2,15 @@ package states
 
 import(
 	"github.com/veandco/go-sdl2/sdl"
-	"game/network"
-	
-	
+	"game/network"	
 )
-
-
 type StateManager struct{
 	currentState State
 	states map[string] State
 	isRunning bool
+	playerId string
+	isWaiting bool
+	gameId string
 
 }
 func MakeStateManager(client *network.Client, width, height, blockSize int32)*StateManager{
@@ -24,6 +23,8 @@ func MakeStateManager(client *network.Client, width, height, blockSize int32)*St
 		states:states,
 		currentState: states["MenuState"], 
 		isRunning : true,
+		isWaiting :false,
+		playerId : "-1",
 	}
 }
 func (stateManager *StateManager)Init(renderer *sdl.Renderer){
@@ -48,3 +49,24 @@ func (stateManager *StateManager) GetCurrentState()State{
 func (stateManager *StateManager)IsRunning() bool{
 	return stateManager.isRunning
 }
+func (stateManager *StateManager)PlayerId()string{
+	return stateManager.playerId
+}
+
+func (stateManager *StateManager)IsWaiting() bool{
+	return stateManager.isWaiting
+}
+func (stateManager *StateManager)SetWaiting(value bool){
+	stateManager.isWaiting = value
+}
+func (stateManager *StateManager)SetPlayerId(value string){
+	stateManager.playerId = value
+}
+
+func (stateManager *StateManager)SetGameId(value string){
+	stateManager.gameId = value
+}
+func (stateManager *StateManager)GameId()string{
+	return stateManager.gameId
+}
+

@@ -44,6 +44,13 @@ func MakeGameFinderState(client *network.Client,width, height, blockSize int32)*
 	listRect := &sdl.Rect{X:blockSize,Y:blockSize,W:width/2, H:height - 2*blockSize}
 	items := make([]*network.GameStat,0)
 	
+	
+	
+	
+	
+
+
+
 	ttf.Init()
 	return &GameFinderState{
 		buttonTexts : buttonTexts,
@@ -75,6 +82,10 @@ func (gameFinderState *GameFinderState)Init(renderer *sdl.Renderer){
 	textRects:= make([]*sdl.Rect,0)
 	buttonRects:= make([]*sdl.Rect,0)	
 	width := gameFinderState.width
+	go gameFinderState.client.Listen("-1")
+	resp := gameFinderState.client.GetResponse()
+	response := resp.(*network.GetGameResponse)
+	gameFinderState.stateManager.SetPlayerId(response.PlayerId)
 
 	for i,text:=range(gameFinderState.buttonTexts){
 		sans,_ := ttf.OpenFont("fonts/SansBold.ttf",fontSize );
@@ -161,7 +172,9 @@ func (gameFinderState *GameFinderState)Tick(event sdl.Event){
 		}else if  key == sdl.K_RETURN{
 			switch gameFinderState.selectedItem{
 				case 0:
-					gameFinderState.createGame()	
+					gameFinderState.createGame()
+					gameFinderState.stateManager.SetWaiting(true)
+					gameFinderState.stateManager.UpdateState("GameState")	
 				break
 				case 2:
 					gameFinderState.stateManager.UpdateState("MenuState")
@@ -211,10 +224,11 @@ func createListRow(item *network.GameStat,fontSize int,renderer *sdl.Renderer,in
 	return resTextures,resRects
 }
 func  (gameFinderState *GameFinderState)GetGames(){
-	resp := gameFinderState.client.SendAndReceive(
+	gameFinderState.client.Send(
 		&network.GetGameRequest{
-			PlayerId:"0",
-		})
+			PlayerId: gameFinderState.stateManager.PlayerId(),
+	})
+	resp := gameFinderState.client.GetResponse() 
 	response := resp.(*network.GetGameResponse)
 	log.Println("games",response.Games)
 	if len(response.Games)>0{
@@ -228,14 +242,24 @@ func  (gameFinderState *GameFinderState)GetGames(){
 
 }
 func  (gameFinderState *GameFinderState)createGame(){
-	resp := gameFinderState.client.SendAndReceive(
+	gameFinderState.client.Send(
 		&network.CreateGameRequest{
-			PlayerId:"0",
+			PlayerId:gameFinderState.stateManager.PlayerId(),
 			Data:"",
 		})
+	resp := gameFinderState.client.GetResponse() 
 	response := resp.(*network.CreateGameResponse)
-	log.Println(response)
+	gameFinderState.addGameItem(response.Game,int(gameFinderState.blockSize/4))
 }
 func (gameFinderState *GameFinderState)Show(){
+	for _,item := range(gameFinderState.gameStatTextures){
+		item.Destroy()
+
+	}
+	gameFinderState.gameStatTextures=make([]*sdl.Texture,0)
+	gameFinderState.gameItems=make([]*network.GameStat,0)
+	gameFinderState.gameStatRects=make([]*sdl.Rect,0)
+
+
 	gameFinderState.GetGames()
 }
