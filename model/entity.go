@@ -11,5 +11,5 @@ type Entity interface{
 	HandleCollision(other Entity)
 	IsRigid()bool
 	GetRect() *sdl.Rect
-
+	GetRotationAngle() float64
 }

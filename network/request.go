@@ -18,7 +18,6 @@ type InGameRequest struct{
 	PlayerId string
 	GameId string
 	NumberOfData string
-	Action string
 	Data *Data
 }
 func (inGameRequest *InGameRequest) String()string{

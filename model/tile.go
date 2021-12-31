@@ -132,3 +132,7 @@ func (tile *Tile)GetRect()*sdl.Rect{
 	return tile.rect
 
 }
+func (tile *Tile)GetRotationAngle()float64{
+	return 0
+
+}

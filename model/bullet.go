@@ -113,3 +113,6 @@ func (bullet *Bullet)GetRect()*sdl.Rect{
 	return bullet.rect
 
 }
+func (bullet *Bullet)GetRotationAngle() float64{
+	return bullet.rotationAngle
+}

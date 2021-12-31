@@ -61,3 +61,6 @@ func  (explosion *Explosion) Free(){
 	explosion.texture.Destroy()
 }
 
+func (explosion *Explosion) GetRotationAngle()float64{
+	return 0;
+}

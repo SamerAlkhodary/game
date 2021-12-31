@@ -3,6 +3,7 @@ import(
 	"strings"
 	"strconv"
 	"fmt"
+	"log"
 )
 
 type Response interface{
@@ -45,9 +46,11 @@ type Data struct{
 	PlayerX string
 	PlayerY string
 	PlayerRotationAngle string
+	TorretX string
+	TorretY string
 }
 func (data *Data)String()string{
-	return fmt.Sprintf("%s&%s&%s&%s",data.PlayerId,data.PlayerX, data.PlayerY, data.PlayerRotationAngle)
+	return fmt.Sprintf("%s&%s&%s&%s&%s&%s&",data.PlayerId,data.PlayerX, data.PlayerY, data.PlayerRotationAngle,data.TorretX,data.TorretY)
 }
 type InGameResponse struct{
 	GameId string
@@ -61,10 +64,10 @@ func (inGameResponse *InGameResponse)FromString(info string){
 	data := strings.Split(info,";")
 	inGameResponse.GameId = data[1]
 
-	numberOfDataRecieved,_ := strconv.Atoi(data[3])
+	numberOfDataRecieved,_ := strconv.Atoi(data[2])
 	dataList := make([]*Data,0)
 	if numberOfDataRecieved > 0 {
-		gamesInfo := strings.Split(data[4],"|")
+		gamesInfo := strings.Split(data[3],"|")
 
 		for _,game:= range(gamesInfo){
 			data:=&Data{}
@@ -73,6 +76,8 @@ func (inGameResponse *InGameResponse)FromString(info string){
 			data.PlayerX = info[1]
 			data.PlayerY = info[2]
 			data.PlayerRotationAngle = info[3]
+			data.TorretX = info[4]
+			data.TorretY = info[5]
 			dataList = append(dataList,data)
 		}
 
@@ -99,14 +104,13 @@ func (createGameResponse *CreateGameResponse)FromString(info string){
 }
 
 type JoinGameResponse struct{
-	PlayerId string
-	GameId string
-	Data string
+	Player2Id string
+	Player2Number string
 
 }
 func (joinGameResponse *JoinGameResponse)FromString(info string){
 	data := strings.Split(info,";")
-	joinGameResponse.PlayerId = data[1]
-	joinGameResponse.GameId = data[2]
-	joinGameResponse.Data = data[3]
+	log.Println(data)
+	joinGameResponse.Player2Id = data[1]
+	joinGameResponse.Player2Number = data[2]
 }

@@ -174,8 +174,14 @@ func (gameFinderState *GameFinderState)Tick(event sdl.Event){
 				case 0:
 					gameFinderState.createGame()
 					gameFinderState.stateManager.SetWaiting(true)
+					gameFinderState.stateManager.playerNumber ="1"
 					gameFinderState.stateManager.UpdateState("GameState")	
 				break
+				case 1:
+					gameFinderState.joinGame()
+					gameFinderState.stateManager.playerNumber ="2"
+					gameFinderState.stateManager.UpdateState("GameState")
+					break
 				case 2:
 					gameFinderState.stateManager.UpdateState("MenuState")
 				break
@@ -250,6 +256,22 @@ func  (gameFinderState *GameFinderState)createGame(){
 	resp := gameFinderState.client.GetResponse() 
 	response := resp.(*network.CreateGameResponse)
 	gameFinderState.addGameItem(response.Game,int(gameFinderState.blockSize/4))
+	gameFinderState.stateManager.SetGameId(response.Game.GameId)
+}
+
+func  (gameFinderState *GameFinderState)joinGame(){
+	gameFinderState.client.Send(
+		&network.JoinGameRequest{
+			PlayerId:gameFinderState.stateManager.PlayerId(),
+			GameId: gameFinderState.gameItems[0].GameId,
+			Name:"name",
+		})
+	resp := gameFinderState.client.GetResponse() 
+	response := resp.(*network.JoinGameResponse)
+	gameFinderState.stateManager.SetGameId(gameFinderState.gameItems[0].GameId)
+
+	gameFinderState.stateManager.otherPlayerId = response.Player2Id
+	gameFinderState.stateManager.otherPlayerNumber = response.Player2Number
 }
 func (gameFinderState *GameFinderState)Show(){
 	for _,item := range(gameFinderState.gameStatTextures){

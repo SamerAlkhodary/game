@@ -68,3 +68,7 @@ func (bg *Background)GetRect()*sdl.Rect{
 	return nil
 
 }
+func (bg *Background)GetRotationAngle()float64{
+	return 0
+
+}

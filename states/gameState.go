@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"game/network"
 	"game/model"
+	"fmt"
 )
 
 type GameState struct{
@@ -17,6 +18,7 @@ type GameState struct{
 	width int32
 	height int32
 	client *network.Client
+	renderer *sdl.Renderer
 }
 
 func MakeGameState(client *network.Client,width,height,blockSize int32)*GameState{
@@ -34,11 +36,7 @@ func (gameState *GameState)SetStateManager(stateManager *StateManager){
 	gameState.stateManager=stateManager
 }
 func (gameState *GameState)Init(renderer *sdl.Renderer){
-	tiles:=readMap()
-	gameState.game = InitGame(gameState.stateManager.GameId(),gameState.stateManager.PlayerId(),
-	16 * gameState.blockSize,10* gameState.blockSize,
-	gameState.blockSize,tiles,renderer,gameState.stateManager)
-
+	gameState.renderer = renderer
 }
 func (gameState *GameState)Render(){
 	gameState.game.Render()
@@ -76,52 +74,55 @@ func readMap()[][]int32{
 	return tiles
 }
 func(gameState *GameState)Show(){
-
+	tiles:=readMap()
+	gameState.game = InitGame(gameState.client,
+		16 * gameState.blockSize,10* gameState.blockSize,
+		gameState.blockSize,tiles,gameState.renderer,gameState.stateManager)
+	gameState.game.initEntities()
 }
 type Game struct{
 	gameId string
+	client  *network.Client
 	playerId string
 	stateManager *StateManager
 	entities []model.Entity
 	bullets []model.Entity
-	players []model.Entity
+	players []*model.Player
 	explosions []model.Entity
 	window *sdl.Window
 	renderer *sdl.Renderer
 	width int32
 	height int32
-	stateChanger func (string)
 	absolutePos *model.Pos
 	xSpeed,ySpeed int32
 	frames uint32
 	mapTiles [][]int32
 	blockSize int32
 	running bool
-	mainPlayer model.Entity
+	mainPlayer *model.Player
 }
 
-func InitGame(gameId, playerId string,width,height int32,blockSize int32,tiles [][]int32,renderer *sdl.Renderer,stateManager *StateManager) *Game{
-
+func InitGame( client*network.Client,width,height int32,blockSize int32,tiles [][]int32,renderer *sdl.Renderer,stateManager *StateManager) *Game{
 	game:= &Game{
 		entities:make([]model.Entity, 0),
 		bullets: make([]model.Entity, 0),
 		explosions :make([]model.Entity, 0),
-		players:make([]model.Entity, 0),
+		players:make([]*model.Player, 0),
 		renderer:renderer,
 		stateManager:stateManager,
 		width: width,
 		height:height,
-		playerId:playerId,
-		gameId:gameId,
+		playerId: stateManager.PlayerId(),
+		gameId: stateManager.GameId(),
+		client:client,
 		absolutePos: model.MakePos(0,0),
 		frames : 30,
 		blockSize:blockSize,
 		mapTiles:tiles,
 		running:true,
 	} 
-	game.initEntities()
+	
 	return game
-
 
 }
 func (game *Game)initEntities(){
@@ -129,10 +130,51 @@ func (game *Game)initEntities(){
 	background := model.MakeBackground("game.mapTiles",game.width,game.height,game.renderer)
 	player1Rect := &sdl.Rect{ X:2*blockSize,Y:2*blockSize,W:1*blockSize,H:1*blockSize}
 	player1KeyControl := model.MakeKeyController('w','e',sdl.K_SPACE,sdl.K_RSHIFT)
-	player1 := model.MakePlayer("Player"+game.playerId,game.playerId,player1Rect,game.renderer,game.blockSize,player1KeyControl,game.AddBullet)
+	player1 := model.MakePlayer(
+		"Player"+game.stateManager.playerNumber,
+		game.stateManager.PlayerId(),
+		game.stateManager.playerNumber,
+		player1Rect,	
+		game.renderer,
+		game.blockSize,
+		player1KeyControl,
+		game.AddBullet)
 	game.mainPlayer = player1
 	game.players = append(game.players,player1)
 
+	if game.stateManager.playerNumber == "2"{
+		player2Rect := &sdl.Rect{ X:2*blockSize,Y:2*blockSize,W:1*blockSize,H:1*blockSize}
+		player := model.MakePlayer(
+			"Player"+game.stateManager.otherPlayerNumber,
+			game.stateManager.otherPlayerId,
+			game.stateManager.otherPlayerNumber,
+			player2Rect	,
+			game.renderer,
+			game.blockSize,
+			nil,
+			game.AddBullet)
+		game.players = append(game.players,player)
+
+	}
+	if game.stateManager.IsWaiting(){
+		resp := game.client.GetResponse() 
+		response := resp.(*network.JoinGameResponse)
+		game.stateManager.otherPlayerNumber = response.Player2Number
+		game.stateManager.otherPlayerId = response.Player2Id
+		player2Rect := &sdl.Rect{ X:4*blockSize,Y:2*blockSize,W:1*blockSize,H:1*blockSize}		
+
+		player := model.MakePlayer(
+			"Player"+game.stateManager.otherPlayerNumber,
+			game.stateManager.otherPlayerId,
+			game.stateManager.otherPlayerNumber,
+			player2Rect	,
+			game.renderer,
+			game.blockSize,
+			nil,
+			game.AddBullet)
+		game.players = append(game.players,player)
+		game.stateManager.SetWaiting(false)
+	}
 	game.AddEntity(background)	
 	for i ,_:= range(game.mapTiles){
 		for j,_ := range(game.mapTiles[i]){
@@ -186,13 +228,12 @@ func  (game *Game) Render(){
 	}
 	for _,player := range(game.players){
 		player.Render(game.renderer)
-		
 	}
 }
 func  (game *Game) Tick(event sdl.Event){
 	eventType,key,running:=handleEvent(event)
 	if running ==false{
-		game.stateChanger("Exit")
+		game.stateManager.UpdateState("Exit")
 	}
 	
 	for _,entity := range(game.entities){
@@ -206,20 +247,35 @@ func  (game *Game) Tick(event sdl.Event){
 		bullet.Tick(eventType,key)
 		for _,entity := range(game.entities){
 			bullet.HandleCollision(entity)
-
 		}
 	}
-	if !game.stateManager.IsWaiting(){
-		for _,player := range(game.players){
-			player.Tick(eventType,key)
-			for _,entity := range(game.entities){
-				player.HandleCollision(entity)
-			}
+	for _,player := range(game.players){
+		player.Tick(eventType,key)
+		for _,entity := range(game.entities){
+			player.HandleCollision(entity)
+		}
 			
-		}
-		
 	}
-	
+	game.client.Send(
+		&network.InGameRequest{
+			PlayerId: game.stateManager.PlayerId(),
+			GameId :  game.stateManager.GameId(),
+			NumberOfData :"1",
+			Data:&network.Data{
+				PlayerId : fmt.Sprintf("%s",game.stateManager.PlayerId()),
+				PlayerX :fmt.Sprintf("%d",game.mainPlayer.GetRect().X),
+				PlayerY : fmt.Sprintf("%d",game.mainPlayer.GetRect().Y),
+				PlayerRotationAngle : fmt.Sprintf("%d",int(game.mainPlayer.GetRotationAngle())),
+				TorretX: fmt.Sprintf("%d",game.mainPlayer.TorretRect().X),
+				TorretY:fmt.Sprintf("%d",game.mainPlayer.TorretRect().Y),
+			},
+
+	})
+	resp := game.client.GetResponse() 
+	response := resp.(*network.InGameResponse)
+	otherPlayer := game.players[1]
+	otherPlayer.Update(response.Data[0])
+
 	var deadBullets []model.Entity
 	game.entities,_ = filterAlive(game.entities)
 	game.bullets,deadBullets = filterAlive(game.bullets)
@@ -229,8 +285,6 @@ func  (game *Game) Tick(event sdl.Event){
 		game.modifyTile(coords.Y/game.blockSize,coords.X/game.blockSize,6)
 
 	}
-	
-
 }
 
 func filterAlive(entities []model.Entity) ([]model.Entity,[]model.Entity){
