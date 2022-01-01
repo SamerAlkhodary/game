@@ -21,7 +21,6 @@ type InGameRequest struct{
 	Data *Data
 }
 func (inGameRequest *InGameRequest) String()string{
-	fmt.Println(inGameRequest.Data.String())
 	return fmt.Sprintf("%s;%s;%s;%s;%s","InGame",inGameRequest.PlayerId,inGameRequest.GameId,"1",inGameRequest.Data.String())
 }
 

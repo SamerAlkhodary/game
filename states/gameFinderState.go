@@ -82,10 +82,10 @@ func (gameFinderState *GameFinderState)Init(renderer *sdl.Renderer){
 	textRects:= make([]*sdl.Rect,0)
 	buttonRects:= make([]*sdl.Rect,0)	
 	width := gameFinderState.width
-	go gameFinderState.client.Listen("-1")
-	resp := gameFinderState.client.GetResponse()
-	response := resp.(*network.GetGameResponse)
-	gameFinderState.stateManager.SetPlayerId(response.PlayerId)
+	
+	
+	
+	
 
 	for i,text:=range(gameFinderState.buttonTexts){
 		sans,_ := ttf.OpenFont("fonts/SansBold.ttf",fontSize );
@@ -176,11 +176,14 @@ func (gameFinderState *GameFinderState)Tick(event sdl.Event){
 					gameFinderState.stateManager.SetWaiting(true)
 					gameFinderState.stateManager.playerNumber ="1"
 					gameFinderState.stateManager.UpdateState("GameState")	
+					gameFinderState.stateManager.isMultiPlayer = true
 				break
 				case 1:
 					gameFinderState.joinGame()
 					gameFinderState.stateManager.playerNumber ="2"
 					gameFinderState.stateManager.UpdateState("GameState")
+					gameFinderState.stateManager.isMultiPlayer = true
+
 					break
 				case 2:
 					gameFinderState.stateManager.UpdateState("MenuState")
@@ -274,6 +277,10 @@ func  (gameFinderState *GameFinderState)joinGame(){
 	gameFinderState.stateManager.otherPlayerNumber = response.Player2Number
 }
 func (gameFinderState *GameFinderState)Show(){
+	go gameFinderState.client.Listen("-1")
+	resp := gameFinderState.client.GetResponse()
+	response := resp.(*network.GetGameResponse)
+	gameFinderState.stateManager.SetPlayerId(response.PlayerId)
 	for _,item := range(gameFinderState.gameStatTextures){
 		item.Destroy()
 

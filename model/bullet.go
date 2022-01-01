@@ -23,8 +23,20 @@ type Bullet struct{
 	ySpeed float64
 	isRigid bool
 	collisionRect *sdl.Rect
+	shooter *Player
+	damageApplied bool
 }
-func MakeBullet(name string,rect *sdl.Rect,renderer *sdl.Renderer,blockSize int32,damage int32, speed float64,effectRadius int32,bulletRange int32,rotationAngle float64)*Bullet{
+func MakeBullet(
+	 shooter *Player ,
+	 name string,
+	 rect *sdl.Rect,
+	 renderer *sdl.Renderer,
+	 blockSize int32,
+	 damage int32, 
+	 speed float64,
+	 effectRadius int32,
+	 bulletRange int32,
+	 rotationAngle float64)*Bullet{
 	bulletPath := "images/bullets/"
 	bulletSurface := spriteLoader(bulletPath+name+".bmp")
 	bulletTexture:= textureMaker(bulletSurface,renderer)
@@ -36,6 +48,7 @@ func MakeBullet(name string,rect *sdl.Rect,renderer *sdl.Renderer,blockSize int3
 		speed : speed,
 		xSpeed : 0,
 		ySpeed : 0,
+		shooter : shooter,
 		name : name,
 		damage : damage,
 		effectRadius : effectRadius,
@@ -48,6 +61,7 @@ func MakeBullet(name string,rect *sdl.Rect,renderer *sdl.Renderer,blockSize int3
 		initialRect: &sdl.Rect{X: rect.X, Y: rect.Y, W:rect.W,H:rect.H},
 		collisionRect: &sdl.Rect{X:rect.X+blockSize*10/100,Y:rect.Y+blockSize*10/100,W:rect.W-blockSize*20/100,H:rect.H-blockSize*20/100},
 		isRigid: true,
+		damageApplied: false,
 	}
 
 }
@@ -94,14 +108,33 @@ func (bullet *Bullet)Free(){
 func (bullet *Bullet)HandleCollision(other Entity){
 	
 	if other.IsRigid(){
-		tile,done := other.(*Tile)
-	if done{
-		collision:=tile.collisionRect.HasIntersection(bullet.collisionRect)
-		if collision{
-			log.Println("coll")
-			bullet.isAlive = false
+		switch  other.(type){
+		case *Tile:
+			tile,_ := other.(*Tile)
+			collision:=tile.collisionRect.HasIntersection(bullet.collisionRect)
+			if collision{
+				log.Println("coll")
+				bullet.isAlive = false
+			}
+		break
+		case *Player:
+			if( other != bullet.shooter){
+				otherPlayer,_:= other.(*Player)
+				collision:=otherPlayer.collisionRect.HasIntersection(bullet.collisionRect)
+				if collision{
+					log.Println("coll")
+					if !bullet.damageApplied{
+
+						bullet.damageApplied = true
+
+						otherPlayer.HandleDamage(bullet.damage)
+					}
+					bullet.isAlive = false
+				}	
+			}
+			break
+			
 		}
-	}
 		
 	}
 

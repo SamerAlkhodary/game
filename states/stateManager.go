@@ -8,7 +8,7 @@ type StateManager struct{
 	currentState State
 	states map[string] State
 	isRunning bool
-	
+	isMultiPlayer bool
 	isWaiting bool
 	gameId string
 	playerId string
@@ -30,6 +30,7 @@ func MakeStateManager(client *network.Client, width, height, blockSize int32)*St
 		isWaiting :false,
 		playerId : "-1",
 		playerNumber : "1",
+		isMultiPlayer: false,
 	}
 }
 func (stateManager *StateManager)Init(renderer *sdl.Renderer){

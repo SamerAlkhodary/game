@@ -13,6 +13,7 @@ import (
 	id string 
 	pos *Pos
 	rect *sdl.Rect
+	fullHealth int32
 	healthBarRect *sdl.Rect
 	healthBarBackgroundRect *sdl.Rect
 	blockSize int32
@@ -110,6 +111,7 @@ func MakePlayer(name string, id,playerNumber string,rect *sdl.Rect,renderer *sdl
 		rotation:0,
 		isAlive:true,
 		fire : false,
+		fullHealth :100,
 		health: 100,
 		move:false,
 		playerNumber:playerNumber,
@@ -191,7 +193,7 @@ func (player *Player)handleEvents(eventType,key int){
 				break
 			case "FIRE":
 				player.fire = true
-				player.chunks[2].Play(2,0)				
+						
 
 				break	
 			}
@@ -229,7 +231,6 @@ func(player *Player) Move(){
 func (player *Player) Fire(){
 
 	if player.fire &&  !player.alreadyFired{
-		
 
 		xOffSet,yOffSet:= calculateSpeed(player.torret.baseTorretSpeed,player.torret.rotationAngle)		
 			player.torret.torretRect.Y -= int32(yOffSet)
@@ -237,7 +238,8 @@ func (player *Player) Fire(){
 			player.torret.torretXOffset = int32(xOffSet)
 			player.torret.torretYOffset = int32(yOffSet)
 			player.alreadyFired =  true
-			player.addBullet(MakeBullet("bullet1",&sdl.Rect{X:player.rect.X,Y:player.rect.Y,W:1 *player.blockSize/3,H:1*player.blockSize/3},
+			player.chunks[2].Play(2,0)		
+			player.addBullet(MakeBullet(player,"bullet1",&sdl.Rect{X:player.rect.X,Y:player.rect.Y,W:1 *player.blockSize/3,H:1*player.blockSize/3},
 			player.renderer,player.blockSize,10,20,10,player.torret.torretRange,player.tankRotationAngle))
 		}
 		if !player.fire && player.alreadyFired{
@@ -257,11 +259,9 @@ func (player *Player)Tick(eventType,key int){
 	player.Move()
 
 	player.Fire()
-	
 }
 func calculateSpeed(speed float64,rotationAngle float64) (float64,float64){
 	radAngle1 :=  (180-rotationAngle) * math.Pi/180
-	
 	ySpeed :=math.Cos(radAngle1)* speed
 	xSpeed := math.Sin(radAngle1) * speed
 
@@ -284,24 +284,45 @@ func (player *Player)Free(){
 	}
 }
 func (player *Player)HandleCollision(other Entity){
-	
 	if other.IsRigid(){
-		tile,done := other.(*Tile)
-		if done{
+		switch  other.(type){
+		case *Tile:
+			tile,_ := other.(*Tile)
 			collision:=tile.collisionRect.HasIntersection(player.collisionRect)
 			if collision{
 				player.xSpeed *= -1
 				player.ySpeed *= -1
-				player.health -= 5
-				if player.health <=0{
-					player.health = 0
-				}
-				player.healthBarRect.W -= player.healthBarRect.W *(100- (player.health*100/100))/100
 				player.Move()
 			}
+		break
+		case *Player:
+			otherPlayer,_:= other.(*Player)
+			if other != player{
+				collision:=otherPlayer.collisionRect.HasIntersection(player.collisionRect)
+				if collision{
+					log.Println("coll with player")
+					player.xSpeed *= -1
+					player.ySpeed *= -1
+					player.Move()
+				}
+			}		
+			break
 		}
+}
+}
+func (player *Player) HandleDamage(damage int32){
+	player.health -= damage
+	log.Println(player.health)
+	player.healthBarRect.W -= int32(float64(player.healthBarBackgroundRect.W) *float64(damage)/float64(player.fullHealth))
 
-	}	
+	if player.healthBarRect.W <=0{
+		player.healthBarRect.W = 0
+	}
+
+
+	if player.health <=0{
+		player.health = 0
+	}
 }
 func(player *Player)IsRigid()bool{
 	return player.isRigid
@@ -327,14 +348,19 @@ func (player *Player)Update( data *network.Data){
 	}
 	player.rect.X = int32(x)
 	player.rect.Y  = int32(y)
-	player.collisionRect.X = int32(x)
-	player.collisionRect.Y  = int32(y)
+	player.collisionRect.X = int32(x)+ player.blockSize*10/100
+	player.collisionRect.Y  = int32(y)+ player.blockSize*10/100
 	player.torret.torretRect.X = int32(x)
 	player.torret.torretRect.Y  = int32(y)
 	player.tankRotationAngle = float64(rotation)
 	player.torret.rotationAngle = float64(rotation)
 	player.torret.torretRect.X = int32(torretX)
 	player.torret.torretRect.Y = int32(torretY)
+	if data.DidFire == "1"{
+		player.addBullet(MakeBullet(player,data.BulletName,&sdl.Rect{X:player.rect.X,Y:player.rect.Y,W:1 *player.blockSize/3,H:1*player.blockSize/3},
+		player.renderer,player.blockSize,10,20,10,player.torret.torretRange,player.tankRotationAngle))
+
+	}
 
 }
 func (player *Player)TorretRect()*sdl.Rect{

@@ -107,6 +107,7 @@ func (menuState *MenuState)Tick(event sdl.Event){
 			switch menuState.selectedItem{
 			case 0:
 				menuState.stateManager.UpdateState("GameState")
+				menuState.stateManager.SetWaiting(false)
 			
 			break
 			case 1:

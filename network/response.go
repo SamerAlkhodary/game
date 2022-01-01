@@ -3,7 +3,6 @@ import(
 	"strings"
 	"strconv"
 	"fmt"
-	"log"
 )
 
 type Response interface{
@@ -48,9 +47,15 @@ type Data struct{
 	PlayerRotationAngle string
 	TorretX string
 	TorretY string
+	DidFire string
+	BulletName string
 }
 func (data *Data)String()string{
-	return fmt.Sprintf("%s&%s&%s&%s&%s&%s&",data.PlayerId,data.PlayerX, data.PlayerY, data.PlayerRotationAngle,data.TorretX,data.TorretY)
+	result := fmt.Sprintf("%s&%s&%s&%s&%s&%s&%s&",data.PlayerId,data.PlayerX, data.PlayerY, data.PlayerRotationAngle,data.TorretX,data.TorretY,data.DidFire)
+	if data.DidFire == "1"{
+		result += data.BulletName +"&"
+	}
+	return result
 }
 type InGameResponse struct{
 	GameId string
@@ -78,6 +83,10 @@ func (inGameResponse *InGameResponse)FromString(info string){
 			data.PlayerRotationAngle = info[3]
 			data.TorretX = info[4]
 			data.TorretY = info[5]
+			data.DidFire = info[6]
+			if data.DidFire == "1"{
+				data.BulletName = info[7]
+			}
 			dataList = append(dataList,data)
 		}
 
@@ -110,7 +119,6 @@ type JoinGameResponse struct{
 }
 func (joinGameResponse *JoinGameResponse)FromString(info string){
 	data := strings.Split(info,";")
-	log.Println(data)
 	joinGameResponse.Player2Id = data[1]
 	joinGameResponse.Player2Number = data[2]
 }

@@ -47,9 +47,7 @@ func (client *Client) Listen(playerId string){
 	fmt.Printf("Some error %v\n", err)
 	} else {
 	data := strings.TrimSpace(string(buffer))
-	log.Println("recievied:",data)
 	action := strings.Split(data,";")[0]
-	log.Println("action:",action)
 	switch action{
 	case "GetGame":
 		response = &GetGameResponse{}
@@ -66,10 +64,8 @@ func (client *Client) Listen(playerId string){
 		break;
 	}
 	response.FromString(data)
-	log.Println("recievied;",response)
 		
 	}
-	log.Println("recieved response")
 	client.responseChannel <- response
    }
 	defer conn.Close()
@@ -80,7 +76,6 @@ func (client *Client) Send(request Request){
    		 fmt.Printf("Some error %v", err)
     return 
 	}
-	log.Println("sent:",request.String())
 	fmt.Fprintf(conn, request.String())
 	defer conn.Close()
 }

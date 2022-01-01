@@ -75,7 +75,9 @@ func readMap()[][]int32{
 }
 func(gameState *GameState)Show(){
 	tiles:=readMap()
-	gameState.game = InitGame(gameState.client,
+	gameState.game = InitGame(
+
+		gameState.client,
 		16 * gameState.blockSize,10* gameState.blockSize,
 		gameState.blockSize,tiles,gameState.renderer,gameState.stateManager)
 	gameState.game.initEntities()
@@ -100,9 +102,11 @@ type Game struct{
 	blockSize int32
 	running bool
 	mainPlayer *model.Player
+	hasFired bool
+	bulletName string
 }
 
-func InitGame( client*network.Client,width,height int32,blockSize int32,tiles [][]int32,renderer *sdl.Renderer,stateManager *StateManager) *Game{
+func InitGame(client*network.Client,width,height int32,blockSize int32,tiles [][]int32,renderer *sdl.Renderer,stateManager *StateManager) *Game{
 	game:= &Game{
 		entities:make([]model.Entity, 0),
 		bullets: make([]model.Entity, 0),
@@ -191,6 +195,8 @@ func (game *Game)makeTile(i, j int32){
 }
 
 func (game *Game)AddBullet(e model.Entity){
+	game.hasFired = true
+	game.bulletName = "bullet1"
 
 	game.bullets = append(game.bullets, e)
 	
@@ -231,6 +237,7 @@ func  (game *Game) Render(){
 	}
 }
 func  (game *Game) Tick(event sdl.Event){
+	game.hasFired = false
 	eventType,key,running:=handleEvent(event)
 	if running ==false{
 		game.stateManager.UpdateState("Exit")
@@ -245,6 +252,9 @@ func  (game *Game) Tick(event sdl.Event){
 	}
 	for _,bullet := range(game.bullets){
 		bullet.Tick(eventType,key)
+		for _,player := range(game.players){
+			bullet.HandleCollision(player)
+		}
 		for _,entity := range(game.entities){
 			bullet.HandleCollision(entity)
 		}
@@ -254,7 +264,16 @@ func  (game *Game) Tick(event sdl.Event){
 		for _,entity := range(game.entities){
 			player.HandleCollision(entity)
 		}
-			
+		
+		for _,otherplayer := range(game.players){
+			player.HandleCollision(otherplayer)
+		}
+		
+
+	}
+	didFire :="0"
+	if game.hasFired{
+		didFire = "1"
 	}
 	game.client.Send(
 		&network.InGameRequest{
@@ -268,13 +287,17 @@ func  (game *Game) Tick(event sdl.Event){
 				PlayerRotationAngle : fmt.Sprintf("%d",int(game.mainPlayer.GetRotationAngle())),
 				TorretX: fmt.Sprintf("%d",game.mainPlayer.TorretRect().X),
 				TorretY:fmt.Sprintf("%d",game.mainPlayer.TorretRect().Y),
+				DidFire: didFire,
+				BulletName : game.bulletName,
 			},
 
 	})
-	resp := game.client.GetResponse() 
-	response := resp.(*network.InGameResponse)
-	otherPlayer := game.players[1]
-	otherPlayer.Update(response.Data[0])
+	if game.stateManager.isMultiPlayer{
+		resp := game.client.GetResponse() 
+		response := resp.(*network.InGameResponse)
+		otherPlayer := game.players[1]
+		otherPlayer.Update(response.Data[0])
+	}
 
 	var deadBullets []model.Entity
 	game.entities,_ = filterAlive(game.entities)

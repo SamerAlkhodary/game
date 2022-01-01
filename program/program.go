@@ -16,7 +16,7 @@ type Program struct{
 	frames uint32 
 }
 func Init()*Program{
-	blockSize:= int32(100)
+	blockSize:= int32(80)
 	client := network.CreateClient(2048,"127.0.0.1","4444")
 	width := 16 * blockSize
 	height:= 10* blockSize
