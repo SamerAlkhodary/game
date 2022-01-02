@@ -57,7 +57,15 @@ func (program *Program)Run(){
 	if 1000/program.frames > sdl.GetTicks()-start{
 		sdl.Delay(1000/program.frames - (sdl.GetTicks()-start))
 	}
-}
+	}
+	if program.client.IsOnline(){
+		program.client.Send(&network.CloseConnectionRequest{
+			PlayerId: program.stateManager.PlayerId(),
+			GameId: program.stateManager.GameId(),
+		})
+
+	}
+	
 	
 }
 func eventGetter()sdl.Event{

@@ -5,6 +5,7 @@ import (
 	"github.com/veandco/go-sdl2/img"
 	"game/network"
 	"log"
+	"fmt"
 )
 
 type GameFinderState struct{
@@ -43,13 +44,6 @@ func MakeGameFinderState(client *network.Client,width, height, blockSize int32)*
 	textTextures:= make([]*sdl.Texture,0)
 	listRect := &sdl.Rect{X:blockSize,Y:blockSize,W:width/2, H:height - 2*blockSize}
 	items := make([]*network.GameStat,0)
-	
-	
-	
-	
-	
-
-
 
 	ttf.Init()
 	return &GameFinderState{
@@ -82,10 +76,6 @@ func (gameFinderState *GameFinderState)Init(renderer *sdl.Renderer){
 	textRects:= make([]*sdl.Rect,0)
 	buttonRects:= make([]*sdl.Rect,0)	
 	width := gameFinderState.width
-	
-	
-	
-	
 
 	for i,text:=range(gameFinderState.buttonTexts){
 		sans,_ := ttf.OpenFont("fonts/SansBold.ttf",fontSize );
@@ -114,9 +104,6 @@ func (gameFinderState *GameFinderState)Init(renderer *sdl.Renderer){
 		gameFinderState.titleTextures = append(gameFinderState.titleTextures,texture)
 	}
 	gameFinderState.titleRects = titleRects
-
-	
-
 	path := "images/menu/"
 	img.Init(img.INIT_PNG)
 	surface,_ :=img.Load(path +"box.png")
@@ -180,9 +167,9 @@ func (gameFinderState *GameFinderState)Tick(event sdl.Event){
 				break
 				case 1:
 					gameFinderState.joinGame()
-					gameFinderState.stateManager.playerNumber ="2"
-					gameFinderState.stateManager.UpdateState("GameState")
-					gameFinderState.stateManager.isMultiPlayer = true
+					
+					
+					
 
 					break
 				case 2:
@@ -203,11 +190,10 @@ func (gameFinderState *GameFinderState)addGameItem(item *network.GameStat,fontSi
 func createListRow(item *network.GameStat,fontSize int,renderer *sdl.Renderer,index int,blockSize int32)([]*sdl.Texture,[]*sdl.Rect){
 	resTextures := []*sdl.Texture{}
 	resRects := []*sdl.Rect{} 
-
 	sans,_ := ttf.OpenFont("fonts/Sans.ttf",fontSize);
 	surface1,_ := sans.RenderUTF8Solid(item.GameId,sdl.Color{R:0,G:0,B:0,A:255})
 	surface2,_ := sans.RenderUTF8Solid(item.GameName,sdl.Color{R:0,G:0,B:0,A:255})
-	surface3,_ := sans.RenderUTF8Solid(item.NbrPlayers,sdl.Color{R:0,G:0,B:0,A:255})
+	surface3,_ := sans.RenderUTF8Solid(fmt.Sprintf("%s/%s",item.NbrPlayers,"2"),sdl.Color{R:0,G:0,B:0,A:255})
 	texture1,_ := renderer.CreateTextureFromSurface(surface1)
 
 	_,_,w1,h1,_ := texture1.Query()
@@ -244,9 +230,7 @@ func  (gameFinderState *GameFinderState)GetGames(){
 		log.Println("adding game",response.Games[0])
 		for _,game := range(response.Games){
 			gameFinderState.addGameItem(game,int(gameFinderState.blockSize/4)) 
-
 		}
-
 	}
 
 }
@@ -263,18 +247,31 @@ func  (gameFinderState *GameFinderState)createGame(){
 }
 
 func  (gameFinderState *GameFinderState)joinGame(){
+	var foundGame *network.GameStat
+	for _,game := range(gameFinderState.gameItems){
+		if game.NbrPlayers != "2"{
+			foundGame = game
+			break
+		}
+	}
+	if(foundGame ==nil){
+		return
+	}
 	gameFinderState.client.Send(
 		&network.JoinGameRequest{
 			PlayerId:gameFinderState.stateManager.PlayerId(),
-			GameId: gameFinderState.gameItems[0].GameId,
+			GameId: foundGame.GameId,
 			Name:"name",
 		})
 	resp := gameFinderState.client.GetResponse() 
 	response := resp.(*network.JoinGameResponse)
-	gameFinderState.stateManager.SetGameId(gameFinderState.gameItems[0].GameId)
+	gameFinderState.stateManager.SetGameId(foundGame.GameId)
 
 	gameFinderState.stateManager.otherPlayerId = response.Player2Id
 	gameFinderState.stateManager.otherPlayerNumber = response.Player2Number
+	gameFinderState.stateManager.playerNumber ="2"
+	gameFinderState.stateManager.isMultiPlayer = true
+	gameFinderState.stateManager.UpdateState("GameState")
 }
 func (gameFinderState *GameFinderState)Show(){
 	go gameFinderState.client.Listen("-1")

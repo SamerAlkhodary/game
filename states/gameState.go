@@ -293,8 +293,13 @@ func  (game *Game) Tick(event sdl.Event){
 
 	})
 	if game.stateManager.isMultiPlayer{
-		resp := game.client.GetResponse() 
-		response := resp.(*network.InGameResponse)
+		resp := game.client.GetResponse()
+		_,ok := resp.(*network.CloseConnectionResponse)
+		if ok{
+			game.stateManager.isMultiPlayer = false
+			return
+		}
+		response,_ := resp.(*network.InGameResponse)
 		otherPlayer := game.players[1]
 		otherPlayer.Update(response.Data[0])
 	}

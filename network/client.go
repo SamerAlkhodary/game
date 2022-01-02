@@ -62,11 +62,14 @@ func (client *Client) Listen(playerId string){
 	case "JoinGame":
 		response = &JoinGameResponse{}
 		break;
+	
+	case "ExitGame":
+		response = &CloseConnectionResponse{}
+	break;
 	}
 	response.FromString(data)
-		
+	client.responseChannel <- response	
 	}
-	client.responseChannel <- response
    }
 	defer conn.Close()
 }
@@ -82,6 +85,9 @@ func (client *Client) Send(request Request){
 func (client *Client)GetResponse()Response{
 	return <-client.responseChannel
 
+}
+func(client *Client)IsOnline()bool{
+	return client.isOnline
 }
 
 

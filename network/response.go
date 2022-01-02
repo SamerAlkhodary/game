@@ -122,3 +122,11 @@ func (joinGameResponse *JoinGameResponse)FromString(info string){
 	joinGameResponse.Player2Id = data[1]
 	joinGameResponse.Player2Number = data[2]
 }
+type CloseConnectionResponse struct{
+	PlayerId string
+}
+func (closeConnectionResponse *CloseConnectionResponse)FromString(info string){
+	data := strings.Split(info,";")
+	closeConnectionResponse.PlayerId = data[1]
+
+}

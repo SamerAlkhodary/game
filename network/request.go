@@ -43,3 +43,10 @@ func (joinGameRequest *JoinGameRequest) String()string{
 	return fmt.Sprintf("%s;%s;%s;%s","JoinGame",joinGameRequest.PlayerId,joinGameRequest.GameId,joinGameRequest.Name)
 }
 
+type CloseConnectionRequest struct{
+	PlayerId string
+	GameId string
+}
+func (closeConnectionRequest *CloseConnectionRequest) String()string{
+	return fmt.Sprintf("%s;%s;%s;","ExitGame",closeConnectionRequest.PlayerId,closeConnectionRequest.GameId)
+}
