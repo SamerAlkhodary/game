@@ -20,6 +20,8 @@ func MakeExplosion(name string,x , y,blockSize int32,renderer *sdl.Renderer) *Ex
 	surface,_ :=img.Load(path +name+".png")
 	//surface := spriteLoader(path+name+".bmp")
 	texture:= textureMaker(surface,renderer)
+	surface.Free()
+
 	return &Explosion{
 		texture:texture,
 		rect: &sdl.Rect{X:x,Y:y,W:50,H:50},
