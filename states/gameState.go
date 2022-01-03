@@ -83,6 +83,7 @@ func(gameState *GameState)Show(){
 }
 type Game struct{
 	gameId string
+	camera *sdl.Rect
 	client  *network.Client
 	playerId string
 	stateManager *StateManager
@@ -109,6 +110,7 @@ type Game struct{
 
 func InitGame(client*network.Client,width,height int32,blockSize int32,tiles [][]int32,renderer *sdl.Renderer,stateManager *StateManager) *Game{
 	game:= &Game{
+		camera: &sdl.Rect{X:0,Y:0,W:width,H:height},
 		entities:make([]model.Entity, 0),
 		fogEntities:make([]model.Entity, 0),
 		bullets: make([]model.Entity, 0),
@@ -193,7 +195,9 @@ func (game *Game)initEntities(){
 	for i ,_:= range(game.mapTiles){
 		for j,_ := range(game.mapTiles[i]){
 			game.makeTile(int32(i),int32(j))
-			game.makeFog(int32(i),int32(j),game.fogMatrix)
+			if (i !=0 && j !=0){
+				game.makeFog(int32(i),int32(j),game.fogMatrix)
+			}
 		}
 	}
 
@@ -239,22 +243,22 @@ func (game *Game)AddEntity(e model.Entity){
 func  (game *Game) Render(){
 	
 	for _,entity := range(game.entities){
-			entity.Render(game.renderer)
+			entity.Render(game.renderer,game.camera)
 		
 	}
 	for _,bullet := range(game.bullets){
-		bullet.Render(game.renderer)
+		bullet.Render(game.renderer,game.camera)
 	
 	}
 	for _,player := range(game.players){
-		player.Render(game.renderer)
+		player.Render(game.renderer,game.camera)
 	}
 	for _,explosion := range(game.explosions){
-		explosion.Render(game.renderer)
+		explosion.Render(game.renderer,game.camera)
 		
 	}
 	for _,fog := range(game.fogEntities){
-		fog.Render(game.renderer)
+		fog.Render(game.renderer,game.camera)
 		
 	}
 }
@@ -295,6 +299,10 @@ func  (game *Game) Tick(event sdl.Event){
 				
 
 	}
+	xSpeed,ySpeed:= game.mainPlayer.GetSpeed()
+	game.camera.X += int32(xSpeed)
+	game.camera.Y += int32(ySpeed)
+
 	didFire :="0"
 	if game.hasFired{
 		didFire = "1"

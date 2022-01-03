@@ -83,8 +83,11 @@ func MakeTile(i,j int32, tileType int32, renderer *sdl.Renderer,blockSize int32)
 
 	}
 }
-func (tile *Tile) Render(renderer *sdl.Renderer){
-	renderer.Copy(tile.texture,tile.from,tile.rect)
+func (tile *Tile) Render(renderer *sdl.Renderer,camera *sdl.Rect){
+	dest := &sdl.Rect{X:tile.rect.X,Y:tile.rect.Y,W:tile.rect.W,H:tile.rect.H}
+	dest.X -=camera.X
+	dest.Y -= camera.Y
+	renderer.Copy(tile.texture,tile.from,dest)
 	renderer.SetDrawColor(0, 255, 0, 255)
 	renderer.DrawRect(tile.collisionRect)
 	renderer.SetDrawColor(193, 154, 107, 255)

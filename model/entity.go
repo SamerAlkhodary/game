@@ -4,7 +4,7 @@ import(
 
 )
 type Entity interface{
-	Render(renderer *sdl.Renderer)
+	Render(renderer *sdl.Renderer,camera *sdl.Rect)
 	Tick(int,int)
 	IsAlive()bool
 	Free()

@@ -147,7 +147,7 @@ func MakePlayer(name string, id,playerNumber string,rect *sdl.Rect,renderer *sdl
 }
 
 
-func (player *Player)Render(renderer *sdl.Renderer){
+func (player *Player)Render(renderer *sdl.Renderer,camera *sdl.Rect){
 	renderer.CopyEx(player.tankTexture, &sdl.Rect{X:0,Y:0,W:200,H:200}, player.rect, player.tankRotationAngle , nil,sdl.FLIP_NONE);
 	renderer.CopyEx(player.torret.torretTexture, &sdl.Rect{X:0,Y:0,W:200,H:200}, player.torret.torretRect, player.torret.rotationAngle , nil,sdl.FLIP_NONE);
 	renderer.SetDrawColor(255, 0, 0, 255)
@@ -387,4 +387,7 @@ func (player *Player)Update( data *network.Data){
 }
 func (player *Player)TorretRect()*sdl.Rect{
 	return player.torret.torretRect
+}
+func (player *Player)GetSpeed()(float64,float64){
+	return player.xSpeed,player.ySpeed
 }

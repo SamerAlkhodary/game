@@ -36,7 +36,7 @@ func MakeFogOfWar(i,j int32, renderer *sdl.Renderer,blockSize int32,fogMatrix []
 
 	}
 }
-func (fogOfWar *FogOfWar) Render(renderer *sdl.Renderer){
+func (fogOfWar *FogOfWar) Render(renderer *sdl.Renderer,camera *sdl.Rect){
 	renderer.SetDrawColor(0, 0, 0, 255)
 
 		if !isFog(fogOfWar.coordI+1,fogOfWar.coordJ,fogOfWar.fogMatrix){

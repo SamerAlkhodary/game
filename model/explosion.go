@@ -46,7 +46,7 @@ func (explosion *Explosion) HandleCollision(other Entity) {
 
 
 }
-func (explosion *Explosion)Render(renderer *sdl.Renderer){
+func (explosion *Explosion)Render(renderer *sdl.Renderer,camera *sdl.Rect){
 	renderer.CopyEx(explosion.texture, &sdl.Rect{X:0+ 220* explosion.currentFrame,Y:0,W:200,H:200}, explosion.rect, 0 , nil,sdl.FLIP_NONE);
 	
 	

@@ -65,7 +65,7 @@ func MakeBullet(
 	}
 
 }
-func (bullet *Bullet)Render(renderer *sdl.Renderer){
+func (bullet *Bullet)Render(renderer *sdl.Renderer,camera *sdl.Rect){
 	renderer.CopyEx(bullet.texture, &sdl.Rect{X:0,Y:0,W:50,H:50}, bullet.rect, bullet.rotationAngle , nil,sdl.FLIP_NONE);
 	
 	
