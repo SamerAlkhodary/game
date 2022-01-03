@@ -76,7 +76,6 @@ func readMap()[][]int32{
 func(gameState *GameState)Show(){
 	tiles:=readMap()
 	gameState.game = InitGame(
-
 		gameState.client,
 		16 * gameState.blockSize,10* gameState.blockSize,
 		gameState.blockSize,tiles,gameState.renderer,gameState.stateManager)
@@ -91,6 +90,8 @@ type Game struct{
 	bullets []model.Entity
 	players []*model.Player
 	explosions []model.Entity
+	fogEntities []model.Entity
+	fogMatrix [][]bool
 	window *sdl.Window
 	renderer *sdl.Renderer
 	width int32
@@ -109,8 +110,10 @@ type Game struct{
 func InitGame(client*network.Client,width,height int32,blockSize int32,tiles [][]int32,renderer *sdl.Renderer,stateManager *StateManager) *Game{
 	game:= &Game{
 		entities:make([]model.Entity, 0),
+		fogEntities:make([]model.Entity, 0),
 		bullets: make([]model.Entity, 0),
 		explosions :make([]model.Entity, 0),
+		fogMatrix : make([][]bool,len(tiles[0])),
 		players:make([]*model.Player, 0),
 		renderer:renderer,
 		stateManager:stateManager,
@@ -123,6 +126,7 @@ func InitGame(client*network.Client,width,height int32,blockSize int32,tiles [][
 		frames : 30,
 		blockSize:blockSize,
 		mapTiles:tiles,
+
 		running:true,
 	} 
 	
@@ -180,11 +184,25 @@ func (game *Game)initEntities(){
 		game.stateManager.SetWaiting(false)
 	}
 	game.AddEntity(background)	
+	for i := 0; i < len(game.mapTiles[0]); i++{
+		game.fogMatrix[i] = make([]bool,len(game.mapTiles))
+		for j := 0; j < len(game.mapTiles); j++{
+			game.fogMatrix[i][j] = true
+		}
+	}
 	for i ,_:= range(game.mapTiles){
 		for j,_ := range(game.mapTiles[i]){
 			game.makeTile(int32(i),int32(j))
+			game.makeFog(int32(i),int32(j),game.fogMatrix)
 		}
 	}
+
+}
+func (game *Game)makeFog(i, j int32 ,fogMatrix[][]bool){
+	fogTile:=model.MakeFogOfWar(j,i,game.renderer,game.blockSize,fogMatrix)
+	game.fogEntities = append(game.fogEntities,fogTile)
+	
+	
 }
 func (game *Game)makeTile(i, j int32){
 	value := game.mapTiles[i][j]
@@ -228,12 +246,16 @@ func  (game *Game) Render(){
 		bullet.Render(game.renderer)
 	
 	}
+	for _,player := range(game.players){
+		player.Render(game.renderer)
+	}
 	for _,explosion := range(game.explosions){
 		explosion.Render(game.renderer)
 		
 	}
-	for _,player := range(game.players){
-		player.Render(game.renderer)
+	for _,fog := range(game.fogEntities){
+		fog.Render(game.renderer)
+		
 	}
 }
 func  (game *Game) Tick(event sdl.Event){
@@ -264,11 +286,13 @@ func  (game *Game) Tick(event sdl.Event){
 		for _,entity := range(game.entities){
 			player.HandleCollision(entity)
 		}
-		
 		for _,otherplayer := range(game.players){
 			player.HandleCollision(otherplayer)
 		}
-		
+		for _,fog := range(game.fogEntities){
+			game.mainPlayer.HandleCollision(fog)
+		}
+				
 
 	}
 	didFire :="0"
@@ -307,6 +331,8 @@ func  (game *Game) Tick(event sdl.Event){
 	var deadBullets []model.Entity
 	game.entities,_ = filterAlive(game.entities)
 	game.bullets,deadBullets = filterAlive(game.bullets)
+	game.fogEntities,_ = filterAlive(game.fogEntities)
+
 	for _,bulletEntity := range(deadBullets){
 		coords:= bulletEntity.GetRect()
 		game.AddExplosion(model.MakeExplosion("exp",coords.X,coords.Y,game.blockSize,game.renderer))

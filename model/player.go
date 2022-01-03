@@ -13,6 +13,7 @@ import (
 	id string 
 	pos *Pos
 	rect *sdl.Rect
+	visionRect  *sdl.Rect
 	fullHealth int32
 	healthBarRect *sdl.Rect
 	healthBarBackgroundRect *sdl.Rect
@@ -111,6 +112,11 @@ func MakePlayer(name string, id,playerNumber string,rect *sdl.Rect,renderer *sdl
 		rotation:0,
 		isAlive:true,
 		fire : false,
+		visionRect : &sdl.Rect{
+			X:rect.X-blockSize*20/100,
+			Y:rect.Y - blockSize*20/100,
+			W:rect.W+ blockSize*35/100,
+			H:rect.H+blockSize*35/100},
 		fullHealth :100,
 		health: 100,
 		move:false,
@@ -151,6 +157,8 @@ func (player *Player)Render(renderer *sdl.Renderer){
 	renderer.SetDrawColor(193, 154, 107, 255)
 	renderer.SetDrawColor(0, 255, 0, 255)
 	renderer.DrawRect(player.collisionRect)
+	renderer.SetDrawColor(0, 255, 0, 255)
+	renderer.DrawRect(player.visionRect)
 	renderer.SetDrawColor(193, 154, 107, 255)
 	renderer.Copy(player.nameTexture,nil,player.nameRect)
 
@@ -225,6 +233,8 @@ func(player *Player) Move(){
 	player.rect.Y += int32(player.ySpeed)
 	player.collisionRect.X += int32(player.xSpeed)
 	player.collisionRect.Y += int32(player.ySpeed)
+	player.visionRect.X += int32(player.xSpeed)
+	player.visionRect.Y += int32(player.ySpeed)
 	player.torret.torretRect.X += int32(player.xSpeed)
 	player.torret.torretRect.Y += int32(player.ySpeed)
 }
@@ -284,6 +294,14 @@ func (player *Player)Free(){
 	}
 }
 func (player *Player)HandleCollision(other Entity){
+	fog,ok := other.(*FogOfWar)
+	if ok{
+			collision:=fog.collisionRect.HasIntersection(player.visionRect)
+			if collision{
+				fog.Kill()
+			}
+			return
+	}
 	if other.IsRigid(){
 		switch  other.(type){
 		case *Tile:
@@ -307,7 +325,9 @@ func (player *Player)HandleCollision(other Entity){
 				}
 			}		
 			break
+		
 		}
+		
 }
 }
 func (player *Player) HandleDamage(damage int32){
@@ -352,6 +372,8 @@ func (player *Player)Update( data *network.Data){
 	player.collisionRect.Y  = int32(y)+ player.blockSize*10/100
 	player.torret.torretRect.X = int32(x)
 	player.torret.torretRect.Y  = int32(y)
+	player.visionRect.X  = int32(x)
+	player.visionRect.Y  = int32(y)
 	player.tankRotationAngle = float64(rotation)
 	player.torret.rotationAngle = float64(rotation)
 	player.torret.torretRect.X = int32(torretX)

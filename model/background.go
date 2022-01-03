@@ -24,9 +24,7 @@ func MakeBackground(image string,width int32, height int32,renderer *sdl.Rendere
 
 	}*/
 	return &Background{
-		rect : &sdl.Rect{0, 0, width, height},
-
-
+		rect : &sdl.Rect{X:0, Y:0, W:width,H: height},
 	}
 	
 }
