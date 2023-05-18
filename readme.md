@@ -10,3 +10,8 @@ Then run
 ````
 ./game
 ````
+# Key bindings
+* Turn left: W
+* Turn right: E
+* Move: Shift
+* Fire: Space
