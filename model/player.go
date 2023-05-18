@@ -156,9 +156,7 @@ func (player *Player)Render(renderer *sdl.Renderer){
 	renderer.FillRect(player.healthBarRect)
 	renderer.SetDrawColor(193, 154, 107, 255)
 	renderer.SetDrawColor(0, 255, 0, 255)
-	renderer.DrawRect(player.collisionRect)
 	renderer.SetDrawColor(0, 255, 0, 255)
-	renderer.DrawRect(player.visionRect)
 	renderer.SetDrawColor(193, 154, 107, 255)
 	renderer.Copy(player.nameTexture,nil,player.nameRect)
 
